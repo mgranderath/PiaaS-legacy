@@ -1,0 +1,5 @@
+./dist/app.bundle.js
+node_modules
+APPS
+.idea
+.DS_Store
