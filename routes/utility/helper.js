@@ -11,14 +11,9 @@ module.exports = function () {
         }
     };
 
-    CreateFile = (path, content) => {
-        fs.writeFile(path, content)
-            .then(() => {
-                return true;
-            })
-            .catch(() => {
-                return false;
-            })
+    createFile = (path, content) => {
+        let obj = fs.writeFile(path, content);
+        return obj;
     };
 
     getConfig = (key, path) => {

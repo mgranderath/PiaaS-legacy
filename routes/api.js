@@ -9,7 +9,7 @@ const Docker = require('dockerode-promise-wrapper');
 let docker = new Docker({socketPath: '/var/run/docker.sock'});
 
 let root = path.resolve('./APPS/');
-let appnames = fs.readdirSync(root).filter(f => fs.statSync(root+"/"+f).isDirectory());
+let appnames = fs.readdirSync(root).filter((f) => fs.statSync(root+"/"+f).isDirectory());
 let apps = {};
 for(item of appnames){
     let temp = {};
@@ -35,17 +35,15 @@ router.get('/', (req, res) => {
                 gui.push(temp);
             }
             res.send(gui);
-        })
-
+        });
 });
 
 router.put('/add', (req, res) => {
-    if(typeof apps[req.query.name] !== 'undefined'){
-        res.json({ message: 'App already exists'});
-        return;
-    }
-    let app = new App(req.query.name);
-    apps[req.query.name].instance = app;
+    let app = new App(req.query.name, docker);
+    let temp = {};
+    temp.instance = app;
+    temp.running = true;
+    apps[req.query.name] = temp;
     res.json({ message: app.setup() });
 });
 

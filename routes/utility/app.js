@@ -7,7 +7,7 @@ require('./helper.js')();
 class App {
     constructor(name, docker){
         this.name = name;
-        this.root = this.path;
+        this.root = './APPS/' + this.name;
         this.exists = fs.exists(this.root);
         this.docker = docker;
         this.dirs = {
@@ -22,27 +22,21 @@ class App {
     }
 
     setup(){
-        if(this.exists){
-            return 'App already exists';
-        }
         fs.mkdirSync(this.root);
         for(const key in this.dirs){
             fs.mkdirSync(this.dirs[key]);
         }
-        this.setup_git();
+        this.setupGit();
         return 'App successfully created';
     }
 
-    setup_git(){
-        if(this.exists){
-            return 'App already exists';
-        }
+    setupGit(){
         let hookpath = path.resolve(this.dirs['repo'] + '/hooks/');
         fs.mkdirSync(hookpath);
         hookpath = hookpath + '/post-receive';
         let hook = ' #!/bin/sh \n '+
             'curl -X PUT -s http://127.0.0.1:8080/api/push?name=' + this.name;
-        CreateFile(hookpath, hook);
+        createFile(hookpath, hook);
         fs.chmodSync(hookpath, '0700');
         exec('git init --quiet --bare', { cwd: this.dirs['repo'] }, log);
     }
@@ -89,30 +83,34 @@ class App {
     deploy(){
         let dockerpath = path.resolve(this.dirs['srv'] + '/Dockerfile');
         let dockerign = path.resolve(this.dirs['srv'] + '/.dockerignore');
-        CreateFile(dockerpath, nodedocker);
-        CreateFile(dockerign, nodedockerign);
-        let stream = tar.pack(this.dirs['srv']);
-        this.docker.buildImage(stream, {t: this.name }).then((stream) => {
-            let docker = this.docker;
-            let self = this;
-            let createOptions = {
-                Image: this.name,
-                name: this.name,
-                ExposedPorts: {'3000/tcp': {} },
-                PortBindings: {'3000/tcp': [{ 'HostPort': '5000' }] }
-            };
-            this.docker.modem.followProgress(stream, onFinished);
-            function onFinished(err, output){
-                docker.createContainer(createOptions).then((strean) => {
-                    docker.modem.followProgress(stream, onFinished);
-                    function onFinished(err, output) {
-                        self.start();
+        createFile(dockerpath, nodedocker)
+            .then(() => {
+                return createFile(dockerign, nodedockerign);
+            })
+            .then(() => {
+                let stream = tar.pack(this.dirs['srv']);
+                this.docker.buildImage(stream, {t: this.name }).then((stream) => {
+                    let docker = this.docker;
+                    let self = this;
+                    let createOptions = {
+                        Image: this.name,
+                        name: this.name,
+                        ExposedPorts: {'3000/tcp': {} },
+                        PortBindings: {'3000/tcp': [{ 'HostPort': '5000' }] }
+                    };
+                    this.docker.modem.followProgress(stream, onFinished);
+                    function onFinished(err, output){
+                        docker.createContainer(createOptions).then((strean) => {
+                            docker.modem.followProgress(stream, onFinished);
+                            function onFinished(err, output) {
+                                self.start();
+                            }
+                        })
                     }
-                })
-            }
-        }).catch((err, response) => {
-            console.log(err, response)
-        });
+                }).catch((err, response) => {
+                    console.log(err, response)
+                });
+            });
     }
 
     get type(){
@@ -157,7 +155,13 @@ class App {
                     return container.inspect()
                 })
                 .then((data, err) => {
+                    if(err){
+                        resolve(false);
+                    }
                     resolve(data.State['Running']);
+                })
+                .catch((err) => {
+                    resolve(false);
                 })
         });
         return obj;
