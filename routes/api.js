@@ -4,16 +4,39 @@ const path = require('path');
 const util = require('util');
 const fs = require('fs-extra');
 const App = require('./utility/app');
+const Docker = require('dockerode-promise-wrapper');
+
+let docker = new Docker({socketPath: '/var/run/docker.sock'});
 
 let root = path.resolve('./APPS/');
 let appnames = fs.readdirSync(root).filter(f => fs.statSync(root+"/"+f).isDirectory());
 let apps = {};
 for(item of appnames){
-    apps[item] = new App(item);
+    let temp = {};
+    temp.instance = new App(item, docker);
+    temp.instance.isRunning()
+        .then((state) => {
+            temp.running = state;
+        });
+    apps[item] = temp;
 }
 
 router.get('/', (req, res) => {
-    res.json({ apps: appnames });
+    let promises = appnames.map((name) =>  {
+        return apps[name].instance.isRunning();
+    });
+    Promise.all(promises)
+        .then((results) => {
+            let gui = [];
+            for(let i = 0; i < results.length; i++){
+                let temp = {};
+                temp.name = appnames[i];
+                temp.running = results[i];
+                gui.push(temp);
+            }
+            res.send(gui);
+        })
+
 });
 
 router.put('/add', (req, res) => {
@@ -22,7 +45,7 @@ router.put('/add', (req, res) => {
         return;
     }
     let app = new App(req.query.name);
-    apps[req.query.name] = app;
+    apps[req.query.name].instance = app;
     res.json({ message: app.setup() });
 });
 
@@ -31,7 +54,7 @@ router.put('/remove', (req, res) => {
         res.json({ message: 'App doesnt exist'});
         return;
     }
-    res.json({ message: apps[req.query.name].remove() });
+    res.json({ message: apps[req.query.name].instance.remove() });
 });
 
 router.put('/push', (req, res) => {
@@ -39,7 +62,7 @@ router.put('/push', (req, res) => {
         res.json({ message: 'App doesnt exist'});
         return;
     }
-    apps[req.query.name].push();
+    apps[req.query.name].instance.push();
     res.send('Push received!');
 });
 
@@ -48,8 +71,7 @@ router.put('/start', (req, res) => {
         res.json({ message: 'App doesnt exist'});
         return;
     }
-    apps[req.query.name].start();
-    res.send('App started!');
+    res.json({ message: apps[req.query.name].instance.start() });
 });
 
 router.put('/stop', (req, res) => {
@@ -57,8 +79,19 @@ router.put('/stop', (req, res) => {
         res.json({ message: 'App doesnt exist'});
         return;
     }
-    apps[req.query.name].stop();
+    apps[req.query.name].instance.stop();
     res.send('App stopped!');
+});
+
+router.put('/running', (req, res) => {
+    if(typeof apps[req.query.name] === 'undefined'){
+        res.json({ message: 'App doesnt exist'});
+        return;
+    }
+    apps[req.query.name].instance.isRunning()
+        .then((state) => {
+            res.json({running: state});
+        })
 });
 
 module.exports = router;

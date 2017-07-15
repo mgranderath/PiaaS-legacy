@@ -18,10 +18,11 @@ module.exports = {
                 }
             },
             {
-                test: /\.css$/,
-                use: [
-                    'style-loader',
-                    'css-loader'
+                test: /(\.scss|\.css)$/,
+                loaders: [
+                    require.resolve('style-loader'),
+                    require.resolve('css-loader') + '?sourceMap&modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]',
+                    require.resolve('sass-loader') + '?sourceMap'
                 ]
             }
         ]

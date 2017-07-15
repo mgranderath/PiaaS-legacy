@@ -1,19 +1,20 @@
-const fs = require('fs-extra');
 const exec = require('child_process').exec;
 const path = require('path');
 const ps = require('ps-node');
-
+const fs = require('fs-extra');
+const tar = require('tar-fs');
+require('./helper.js')();
 class App {
-    constructor(name){
+    constructor(name, docker){
         this.name = name;
         this.root = this.path;
-        this.exists = fs.existsSync(this.root);
+        this.exists = fs.exists(this.root);
+        this.docker = docker;
         this.dirs = {
             'repo': this.root + '/repo',
             'env': this.root + '/env',
             'srv': this.root + '/srv'
         };
-        this.instance = null;
     }
 
     get path(){
@@ -41,11 +42,7 @@ class App {
         hookpath = hookpath + '/post-receive';
         let hook = ' #!/bin/sh \n '+
             'curl -X PUT -s http://127.0.0.1:8080/api/push?name=' + this.name;
-        fs.writeFile(hookpath, hook, (err) => {
-            if(err) {
-                return console.log(err);
-            }
-        });
+        CreateFile(hookpath, hook);
         fs.chmodSync(hookpath, '0700');
         exec('git init --quiet --bare', { cwd: this.dirs['repo'] }, log);
     }
@@ -55,8 +52,23 @@ class App {
             return 'App doesnt exist';
         }
         fs.remove(this.root);
-        exec('docker rm ' + this.name, { cwd: this.dirs['srv'] }, log);
-        exec('docker rmi piias/' + this.name, { cwd: this.dirs['srv'] }, log);
+        this.docker.getContainer(this.name)
+            .then((container) => {
+                container.remove((err, data) => {
+                    console.log(err);
+                })
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+        this.docker.getImage(this.name)
+            .then((image) => {
+                image.remove((err, data) => {
+                    console.log(err);
+                })
+            }).catch((err) => {
+            console.log(err);
+            });
         return 'App successfully removed';
     }
 
@@ -75,30 +87,34 @@ class App {
     }
 
     deploy(){
-        ps.lookup({
-            command: 'nginx'
-        }, function(err, resultList ) {
-            if (err) {
-                throw new Error( err );
-            }
-            if(resultList.length === 0){
-                exec('nginx -c /Users/maltegranderath/Desktop/PiaaS/NGINX/default', log);
-            }else{
-                exec('nginx -s reload', log);
-            }
-        });
         let dockerpath = path.resolve(this.dirs['srv'] + '/Dockerfile');
         let dockerign = path.resolve(this.dirs['srv'] + '/.dockerignore');
         CreateFile(dockerpath, nodedocker);
         CreateFile(dockerign, nodedockerign);
-        let child = exec('docker build -t piaas/' + this.name +' .', { cwd: this.dirs['srv'] }, log);
-        child.on('close', () => {
-            exec('docker run -p 49160:3000 -d --name ' + this.name + ' piaas/' + this.name, { cwd: this.dirs['srv'] }, log);
+        let stream = tar.pack(this.dirs['srv']);
+        this.docker.buildImage(stream, {t: this.name }).then((stream) => {
+            let docker = this.docker;
+            let self = this;
+            let createOptions = {
+                Image: this.name,
+                name: this.name,
+                ExposedPorts: {'3000/tcp': {} },
+                PortBindings: {'3000/tcp': [{ 'HostPort': '5000' }] }
+            };
+            this.docker.modem.followProgress(stream, onFinished);
+            function onFinished(err, output){
+                docker.createContainer(createOptions).then((strean) => {
+                    docker.modem.followProgress(stream, onFinished);
+                    function onFinished(err, output) {
+                        self.start();
+                    }
+                })
+            }
+        }).catch((err, response) => {
+            console.log(err, response)
         });
     }
-    //docker stop $(docker ps -q --filter ancestor=<image-name> )
-    //docker rm $(docker ps -a -q)
-    //docker rmi $(docker images -f "dangling=true" -q)
+
     get type(){
         if(fs.existsSync(this.dirs['srv'] + '/package.json')){
             return 'Node';
@@ -108,22 +124,45 @@ class App {
     }
 
     start(){
-        exec('docker start ' + this.name , { cwd: this.dirs['srv'] }, log);
+        this.docker.getContainer(this.name)
+            .then((container) => {
+                container.start((err, data) => {
+                    if(err){
+                        return err;
+                    }
+                    return 'App started!';
+                })
+            })
+            .catch((err) => {
+                return err;
+            })
     }
 
     stop(){
-        exec('docker stop ' + this.name, { cwd: this.dirs['srv'] }, log);
+        this.docker.getContainer(this.name)
+            .then((container) => {
+                container.stop((err, data) => {
+                    console.log(err);
+                })
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
+    isRunning(){
+        let obj = new Promise((resolve, reject) => {
+            this.docker.getContainer(this.name)
+                .then((container) => {
+                    return container.inspect()
+                })
+                .then((data, err) => {
+                    resolve(data.State['Running']);
+                })
+        });
+        return obj;
     }
 }
-
-log = (error, stdout, stderr) => {
-    if(error){
-        console.log(error);
-    }
-    if(stderr){
-        console.log(error);
-    }
-};
 
 nodedocker = `
 FROM node:7.7.2-alpine
@@ -147,13 +186,5 @@ nodedockerign = `
 node_modules
 npm-debug.log
 `;
-
-CreateFile = (path, content) => {
-    fs.writeFile(path, content, (err) => {
-        if(err) {
-            return console.log(err);
-        }
-    });
-};
 
 module.exports = App;

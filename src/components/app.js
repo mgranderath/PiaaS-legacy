@@ -1,35 +1,25 @@
 import React from 'react';
 import '../styles/app.css';
 import axios from 'axios';
+import {Button} from 'react-toolbox/lib/button';
+import AppTable from './appTable';
+import {AppBar} from 'react-toolbox/lib/app_bar';
 
 export default class App extends React.Component {
     constructor(props){
         super(props);
-        this.api = 'http://127.0.0.1:8080/api';
+        this.api = '/api';
         this.state = {
             data: []
         }
     }
 
-    componentDidMount(){
-        // Make HTTP reques with Axios
-        axios.get(this.api)
-            .then((res) => {
-                // Set state with result
-                this.setState({data: res.data.apps});
-            });
-    }
-
     render(){
         return (
             <div>
-                <table>
-                    <tbody>
-                    {[...this.state.data].map((x, i) =>
-                        <tr key={i}><td>{x}</td></tr>
-                    )}
-                    </tbody>
-                </table>
+                <AppBar title='PiaaS' leftIcon='menu'></AppBar>
+                <Button icon='add' label='Add this' flat primary />
+                <AppTable/>
             </div>
         )
     }

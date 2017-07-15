@@ -1,0 +1,9 @@
+table {
+    box-shadow: 0 0 3px #999;
+    margin: 20px;
+}
+
+td {
+    text-align: center;
+    padding: 5px;
+}

@@ -6,7 +6,9 @@
   "author": "Malte Granderath",
   "license": "MIT",
   "scripts": {
-    "start-dev": "parallelshell 'nodemon server.js' 'webpack -w'"
+    "start-dev": "parallelshell 'nodemon server.js' 'webpack -w'",
+    "start": "node server.js",
+    "build": "./node_modules/.bin/webpack"
   },
   "dependencies": {
     "axios": "^0.16.2",
@@ -15,16 +17,22 @@
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
     "css-loader": "^0.28.4",
+    "dockerode": "^2.5.0",
+    "dockerode-promise-es6": "^1.1.0",
+    "dockerode-promise-wrapper": "^1.2.0",
     "ejs": "^2.5.6",
     "express": "^4.15.3",
     "fs-extra": "^3.0.1",
+    "node-sass": "^4.5.3",
     "nodemon": "^1.11.0",
     "parallelshell": "^3.0.1",
     "ps-node": "^0.1.6",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "react-toolbox": "^2.0.0-beta.12",
+    "sass-loader": "^6.0.6",
     "style-loader": "^0.18.2",
+    "tar-fs": "^1.15.3",
     "webpack": "^3.1.0"
   }
 }
