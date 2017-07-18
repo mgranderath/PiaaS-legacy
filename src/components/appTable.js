@@ -106,7 +106,7 @@ export default class AppTable extends React.Component {
                 </thead>
                 <tbody>
                 {Object.keys(this.state.data).map((x, i) =>
-                    <tr key={i}><td>{ this.state.data[x].name }</td><td>{ this.state.data[x].running ? <Button onClick={() => {this.stopapp(this.state.data[x].name, x)}} icon='stop' label='Stop' flat primary /> : <Button onClick={() => {this.startapp(this.state.data[x].name, x)}} icon='directions_run' label='Start' flat primary /> }</td></tr>
+                    <tr key={i}><td>{ this.state.data[x].instance.name }</td><td>{ this.state.data[x].running ? <Button onClick={() => {this.stopapp(this.state.data[x].instance.name, x)}} icon='stop' label='Stop' flat primary /> : <Button onClick={() => {this.startapp(this.state.data[x].instance.name, x)}} icon='directions_run' label='Start' flat primary /> }</td></tr>
                 )}
                 </tbody>
             </table>
