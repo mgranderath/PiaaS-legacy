@@ -48,8 +48,9 @@ router.put('/remove', async (req: Request, res: Response) => {
 
 router.put('/push', async (req: Request, res: Response) => {
     let apps = await getAppInfo();
-    apps[req.query.name].instance.push();
-    res.send('Push received!');
+    let result = await apps[req.query.name].instance.push();
+    console.log(result);
+    res.json(result);
 });
 
 router.put('/start', async (req: Request, res: Response) => {

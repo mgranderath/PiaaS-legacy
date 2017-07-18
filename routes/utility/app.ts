@@ -38,9 +38,11 @@ export class App {
                     data.created = true;
                     data.repo = path.resolve(this.dirs['repo']);
                     return data;
+                }else{
+                    return {error: 'Error while initalizing git'};
                 }
             }catch(err){
-                return {error: 'error while creating directories'};
+                return {error: 'Error while creating directories'};
             }
         }else{
             return {error: 'App already exists!'};
@@ -73,27 +75,23 @@ export class App {
       }catch(err){
 
       }
-        return {message: 'App successfully removed'};
+      return {message: 'App successfully removed'};
     };
 
     push = async () => {
-      try{
-          if(await fs.exists(this.dirs['srv'] + '/.git')){
-              let child = exec('git pull --quiet', {cwd: this.dirs['srv']}, log);
-              child.on('close', () => {
-                  this.deploy();
-                  return true;
-              });
-          }else{
-              let child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']), {cwd: this.root}, log);
-              child.on('close', () => {
-                  this.deploy();
-                  return true;
-              });
-          }
-      }catch(err){
-        return false;
-      }
+        if(fs.existsSync(this.dirs['srv'] + '/.git')){
+            let child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
+            child.on('close', () => {
+                this.deploy();
+                return true;
+            });
+        }else{
+            let child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']) , { cwd: this.root }, log);
+            child.on('close', () => {
+                this.deploy();
+                return true;
+            });
+        }
     };
 
     deploy = async () => {
@@ -115,12 +113,17 @@ export class App {
             };
             docker.modem.followProgress(stream, onFinished);
             function onFinished(err: string, output: string){
-                docker.createContainer(createOptions).then(() => {
-                    self.start();
-                })
+                docker.createContainer(createOptions)
+                    .then( async () => {
+                        return await self.start();
+                    })
+                    .catch((err: string) => {
+                      console.log(err);
+                    });
             }
         }).catch((err: string, response: string) => {
-            console.log(err, response)
+            console.log(err);
+            return false;
         });
     };
 
@@ -134,6 +137,7 @@ export class App {
                 return true;
             });
         }catch(err){
+            console.log(err);
             return false;
         }
     };
