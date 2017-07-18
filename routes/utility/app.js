@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 const tar = require('tar-fs');
 require('./helper.js')();
 class App {
-    constructor(name, docker){
+    constructor(name, docker) {
         this.name = name;
         this.root = './APPS/' + this.name;
         this.exists = fs.exists(this.root);
@@ -17,32 +17,49 @@ class App {
         };
     }
 
-    get path(){
+    get path() {
         return './APPS/' + this.name;
     }
 
-    setup(){
-        fs.mkdirSync(this.root);
-        for(const key in this.dirs){
-            fs.mkdirSync(this.dirs[key]);
+    async setup() {
+        try{
+            await fs.mkdir(this.root);
+        } catch(err) {
+            return { error: 'App already exists!' };
         }
-        this.setupGit();
-        return 'App successfully created';
+        for (const key in this.dirs) {
+            await fs.mkdir(this.dirs[key]);
+        }
+        let data = {
+            message: 'App was created!',
+            repo: path.resolve(this.dirs['repo'])
+        };
+        const git = await this.setupGit();
+        if(git === true){
+            return data;
+        }else{
+            let data = {
+                message: 'App was not created!',
+                repo: path.resolve(this.dirs['repo'])
+            };
+            return data;
+        }
     }
 
-    setupGit(){
+    async setupGit() {
         let hookpath = path.resolve(this.dirs['repo'] + '/hooks/');
-        fs.mkdirSync(hookpath);
+        await fs.mkdir(hookpath);
         hookpath = hookpath + '/post-receive';
-        let hook = ' #!/bin/sh \n '+
+        let hook = ' #!/bin/sh \n ' +
             'curl -X PUT -s http://127.0.0.1:8080/api/push?name=' + this.name;
-        createFile(hookpath, hook);
-        fs.chmodSync(hookpath, '0700');
-        exec('git init --quiet --bare', { cwd: this.dirs['repo'] }, log);
+        await createFile(hookpath, hook);
+        await fs.chmod(hookpath, '0700');
+        exec('git init --quiet --bare', {cwd: this.dirs['repo']}, log);
+        return true;
     }
 
-    remove(){
-        if(!this.exists){
+    remove() {
+        if (!this.exists) {
             return 'App doesnt exist';
         }
         fs.remove(this.root);
@@ -62,25 +79,25 @@ class App {
                 })
             }).catch((err) => {
             console.log(err);
-            });
+        });
         return 'App successfully removed';
     }
 
-    push(){
-        if(fs.existsSync(this.dirs['srv'] + '/.git')){
-            let child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
+    push() {
+        if (fs.existsSync(this.dirs['srv'] + '/.git')) {
+            let child = exec('git pull --quiet', {cwd: this.dirs['srv']}, log);
             child.on('close', () => {
                 this.deploy();
             });
-        }else{
-            let child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']) , { cwd: this.root }, log);
+        } else {
+            let child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']), {cwd: this.root}, log);
             child.on('close', () => {
                 this.deploy();
             });
         }
     }
 
-    deploy(){
+    deploy() {
         let dockerpath = path.resolve(this.dirs['srv'] + '/Dockerfile');
         let dockerign = path.resolve(this.dirs['srv'] + '/.dockerignore');
         createFile(dockerpath, nodedocker)
@@ -89,17 +106,17 @@ class App {
             })
             .then(() => {
                 let stream = tar.pack(this.dirs['srv']);
-                this.docker.buildImage(stream, {t: this.name }).then((stream) => {
+                this.docker.buildImage(stream, {t: this.name}).then((stream) => {
                     let docker = this.docker;
                     let self = this;
                     let createOptions = {
                         Image: this.name,
                         name: this.name,
-                        ExposedPorts: {'3000/tcp': {} },
-                        PortBindings: {'3000/tcp': [{ 'HostPort': '5000' }] }
+                        ExposedPorts: {'3000/tcp': {}},
+                        PortBindings: {'3000/tcp': [{'HostPort': '5000'}]}
                     };
                     this.docker.modem.followProgress(stream, onFinished);
-                    function onFinished(err, output){
+                    function onFinished(err, output) {
                         docker.createContainer(createOptions).then((strean) => {
                             docker.modem.followProgress(stream, onFinished);
                             function onFinished(err, output) {
@@ -113,19 +130,19 @@ class App {
             });
     }
 
-    get type(){
-        if(fs.existsSync(this.dirs['srv'] + '/package.json')){
+    get type() {
+        if (fs.existsSync(this.dirs['srv'] + '/package.json')) {
             return 'Node';
-        }else if(fs.existsSync(this.dirs['srv'] + '/requirements.txt')){
+        } else if (fs.existsSync(this.dirs['srv'] + '/requirements.txt')) {
             return 'Python';
         }
     }
 
-    start(){
+    start() {
         this.docker.getContainer(this.name)
             .then((container) => {
                 container.start((err, data) => {
-                    if(err){
+                    if (err) {
                         return err;
                     }
                     return 'App started!';
@@ -136,7 +153,7 @@ class App {
             })
     }
 
-    stop(){
+    stop() {
         this.docker.getContainer(this.name)
             .then((container) => {
                 container.stop((err, data) => {
@@ -148,14 +165,14 @@ class App {
             })
     }
 
-    isRunning(){
+    isRunning() {
         let obj = new Promise((resolve, reject) => {
             this.docker.getContainer(this.name)
                 .then((container) => {
                     return container.inspect()
                 })
                 .then((data, err) => {
-                    if(err){
+                    if (err) {
                         resolve(false);
                     }
                     resolve(data.State['Running']);

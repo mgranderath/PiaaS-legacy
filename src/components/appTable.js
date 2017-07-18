@@ -2,19 +2,47 @@ import React from 'react';
 import axios from 'axios';
 import {Button} from 'react-toolbox/lib/button';
 import '../styles/AppTable.css';
+import {Dialog} from 'react-toolbox/lib/dialog';
+import {Input} from 'react-toolbox/lib/input';
+import {PulseLoader} from 'halogen';
+import TextBlock from './textBlock';
 
-const App_Model = {
-    name: {type: String},
-    running: {type: Boolean}
-};
 
 export default class AppTable extends React.Component {
     constructor(props){
         super(props);
         this.api = '/api';
         this.state = {
-            data: []
+            data: [],
+            addActive: false,
+            name: '',
+            loading: false,
+            response: ''
         };
+        this.actions = [
+            { label: 'Close', onClick: () => this.openApp()},
+            { label: 'Add', onClick: () => this.saveApp()},
+        ];
+    }
+
+    openApp(){
+        this.setState({addActive: !this.state.addActive, name: ''});
+    };
+
+    handleApp(target){
+        this.setState({name: target});
+    }
+
+    saveApp(){
+        this.setState({loading: true});
+        axios.put(this.api + '/add?name=' + this.state.name)
+            .then((response) => {
+                this.setState({response: response.data.repo});
+                this.setState({loading: false});
+            })
+            .catch((err) => {
+                console.log(err);
+            });
     }
 
     startapp(name, x){
@@ -59,6 +87,19 @@ export default class AppTable extends React.Component {
 
     render(){
         return (
+            <div>
+                <Button icon='add' label='Add' onClick={() => this.openApp()} flat primary/>
+                <Dialog
+                    actions={this.actions}
+                    active={this.state.addActive}
+                    onEscKeyDown={() => this.openApp()}
+                    onOverlayClick={() => this.openApp()}
+                    title='Add App'
+                    >
+                    <Input type="text" label="App Name" name="appname" value={this.state.name} onChange={(evt) => this.handleApp(evt) }/>
+                    <TextBlock display={false} content={this.state.response} />
+                    <PulseLoader color="#303f9f" loading={this.state.loading} size="16px"/>
+                </Dialog>
             <table>
                 <thead>
                     <tr><th>Name</th><th>State</th></tr>
@@ -69,6 +110,7 @@ export default class AppTable extends React.Component {
                 )}
                 </tbody>
             </table>
+            </div>
         )
     }
 }

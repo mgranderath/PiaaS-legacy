@@ -22,6 +22,17 @@ for(item of appnames){
 }
 
 router.get('/', (req, res) => {
+    apps = {};
+    appnames = fs.readdirSync(root).filter((f) => fs.statSync(root+"/"+f).isDirectory());
+    for(item of appnames){
+        let temp = {};
+        temp.instance = new App(item, docker);
+        temp.instance.isRunning()
+            .then((state) => {
+                temp.running = state;
+            });
+        apps[item] = temp;
+    }
     let promises = appnames.map((name) =>  {
         return apps[name].instance.isRunning();
     });
@@ -38,13 +49,13 @@ router.get('/', (req, res) => {
         });
 });
 
-router.put('/add', (req, res) => {
+router.put('/add', async (req, res) => {
     let app = new App(req.query.name, docker);
     let temp = {};
     temp.instance = app;
     temp.running = true;
     apps[req.query.name] = temp;
-    res.json({ message: app.setup() });
+    res.json(await app.setup());
 });
 
 router.put('/remove', (req, res) => {

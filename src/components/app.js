@@ -18,7 +18,6 @@ export default class App extends React.Component {
         return (
             <div>
                 <AppBar title='PiaaS' leftIcon='menu'></AppBar>
-                <Button icon='add' label='Add this' flat primary />
                 <AppTable/>
             </div>
         )

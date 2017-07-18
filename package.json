@@ -23,6 +23,7 @@
     "ejs": "^2.5.6",
     "express": "^4.15.3",
     "fs-extra": "^3.0.1",
+    "halogen": "^0.2.0",
     "node-sass": "^4.5.3",
     "nodemon": "^1.11.0",
     "parallelshell": "^3.0.1",

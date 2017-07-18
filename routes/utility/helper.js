@@ -11,9 +11,8 @@ module.exports = function () {
         }
     };
 
-    createFile = (path, content) => {
-        let obj = fs.writeFile(path, content);
-        return obj;
+    createFile = async (path, content) => {
+        await fs.writeFile(path, content);
     };
 
     getConfig = (key, path) => {
