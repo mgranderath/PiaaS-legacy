@@ -1,8 +1,9 @@
+import {create} from "domain";
 const exec = require('child_process').exec;
 const path = require('path');
 const fs = require('fs-extra');
 const tar = require('tar-fs');
-import {log, createFile} from './helper';
+import {log, createFile, onClose, createDockerfile, getConfig} from './helper';
 const Docker = require('dockerode-promise-wrapper');
 
 const docker = new Docker({socketPath: '/var/run/docker.sock'});
@@ -23,10 +24,6 @@ export class App {
     }
 
     init = async () => {
-        let data = {
-            created: false,
-            repo: null
-        };
         if(await !fs.exists(this.root)){
             try{
                 await fs.mkdir(this.root);
@@ -35,17 +32,15 @@ export class App {
                 }
                 const git = await this.initGit();
                 if(git === true){
-                    data.created = true;
-                    data.repo = path.resolve(this.dirs['repo']);
-                    return data;
+                    return {status: true, message: 'App successfully created!', repo: path.resolve(this.dirs['repo'])};
                 }else{
-                    return {error: 'Error while initalizing git'};
+                    return {status: false, error: 'Error while initalizing git'};
                 }
             }catch(err){
-                return {error: 'Error while creating directories'};
+                return {status: false, error: 'Error while creating directories'};
             }
         }else{
-            return {error: 'App already exists!'};
+            return {status: false, error: 'App already exists!'};
         }
     };
 
@@ -79,26 +74,34 @@ export class App {
     };
 
     push = async () => {
-        if(fs.existsSync(this.dirs['srv'] + '/.git')){
+        let result;
+        if(await fs.exists(this.dirs['srv'] + '/.git')){
             let child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
-            child.on('close', () => {
-                this.deploy();
-                return true;
-            });
+            result= await onClose(child, this);
         }else{
             let child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']) , { cwd: this.root }, log);
-            child.on('close', () => {
-                this.deploy();
-                return true;
-            });
+            result = await onClose(child, this);
+        }
+        if(result){
+            return {status: true, message: 'App successfully pushed'};
+        }else{
+            return {status: false, error: 'Error while pushing'};
         }
     };
 
     deploy = async () => {
+        let config = await getConfig(this.dirs['srv']);
         let dockerpath = path.resolve(this.dirs['srv'] + '/Dockerfile');
         let dockerign = path.resolve(this.dirs['srv'] + '/.dockerignore');
-        await createFile(dockerpath, nodedocker);
-        await createFile(dockerign, nodedockerign);
+        await createDockerfile(this, config);
+        try{
+            let container = await docker.getContainer(this.name);
+            await container.remove({force: true});
+            let image = await docker.getImage(this.name);
+            await image.remove();
+        }catch(err){
+
+        }
         let stream = tar.pack(this.dirs['srv']);
         docker.buildImage(stream, {t: this.name }).then((stream: any) => {
             let self = this;
@@ -108,8 +111,12 @@ export class App {
                 Tty: true,
                 OpenStdin: false,
                 StdinOnce: false,
-                ExposedPorts: {'3000/tcp': {} },
-                PortBindings: {'3000/tcp': [{ 'HostPort': '5000' }] }
+                Memory: config.memory * 1024 * 1024,
+                ExposedPorts: {'2999/tcp': {} },
+                PortBindings: {'2999/tcp': [{ 'HostPort': '5000' }] },
+                Env: [
+                    'PORT=2999'
+                ]
             };
             docker.modem.followProgress(stream, onFinished);
             function onFinished(err: string, output: string){
@@ -118,7 +125,8 @@ export class App {
                         return await self.start();
                     })
                     .catch((err: string) => {
-                      console.log(err);
+                        console.log(err);
+                        return false;
                     });
             }
         }).catch((err: string, response: string) => {
@@ -132,13 +140,13 @@ export class App {
             let container = await docker.getContainer(this.name);
             container.start((err: string, data: any) => {
                 if(err){
-                    return false;
+                    return {status: false, error: 'Error while starting container'};
                 }
-                return true;
+                return {status: true, message: 'Successfully started'};
             });
         }catch(err){
             console.log(err);
-            return false;
+            return {status: false, error: 'Error while selecting container'};
         }
     };
 
@@ -147,12 +155,14 @@ export class App {
             let container = await docker.getContainer(this.name);
             container.stop((err: string, data: any) => {
                 if(err){
-                    return false;
+                    console.log(err);
+                    return {status: false, error: 'Error while stoping container'};
                 }
-                return true;
+                return {status: true, message: 'Successfully stopped'};
             });
         }catch(err){
-            return false;
+            console.log(err);
+            return {status: false, error: 'Error while selecting container'};
         }
     };
 
@@ -166,27 +176,14 @@ export class App {
         }
     };
 
+    type = async () => {
+        if(fs.existsSync(this.dirs['srv'] + '/package.json')){
+            return {type: 'node'};
+        }else if(fs.existsSync(this.dirs['srv'] + '/requirements.txt')){
+            return {type: 'python'};
+        }else{
+            return {type: 'not detected'}
+        }
+    };
+
 }
-
-let nodedocker = `
-FROM node:7.7.2-alpine
-
-# Create app directory
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-# Install app dependencies
-COPY package.json /usr/src/app/
-RUN npm install
-
-# Bundle app source
-COPY . /usr/src/app
-    
-EXPOSE 8080
-CMD [ "npm", "start" ]
-`;
-
-let nodedockerign = `
-node_modules
-npm-debug.log
-`;
