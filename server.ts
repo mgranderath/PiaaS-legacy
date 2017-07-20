@@ -4,8 +4,8 @@ const app = express();
 const port = process.env.PORT || 8080;
 const fs = require('fs');
 
-if (!fs.existsSync('./APPS')){
-    fs.mkdirSync('./APPS');
+if (!fs.existsSync('./APPS')) {
+  fs.mkdirSync('./APPS');
 }
 
 app.set('port', port);

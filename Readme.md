@@ -7,5 +7,8 @@ Project Status:
 - [x] Create, push and run node js projects
 - [ ] Config file
 - [ ] Automatic Port Selection
+- [ ] Write tests
+- [ ] Add example applications
+- [ ] Write Documentation
 
 More will be added soon
