@@ -48,20 +48,18 @@ router.put('/remove', async (req: Request, res: Response) => {
 
 router.put('/push', async (req: Request, res: Response) => {
     let apps = await getAppInfo();
-    let result = await apps[req.query.name].instance.push();
-    console.log(result);
-    res.json(result);
+    res.json(await apps[req.query.name].instance.push());
 });
 
 router.put('/start', async (req: Request, res: Response) => {
     let apps = await getAppInfo();
-    res.json({ message: apps[req.query.name].instance.start() });
+    res.json( await apps[req.query.name].instance.start() );
 });
 
 router.put('/stop', async (req: Request, res: Response) => {
     let apps = await getAppInfo();
     apps[req.query.name].instance.stop();
-    res.send('App stopped!');
+    res.json(await apps[req.query.name].instance.stop());
 });
 
 router.put('/running', async (req: Request, res: Response) => {
