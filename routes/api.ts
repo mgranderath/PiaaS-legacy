@@ -4,10 +4,7 @@ const path = require('path');
 const util = require('util');
 const fs = require('fs-extra');
 import { App } from './utility/app';
-const Docker = require('dockerode-promise-wrapper');
 import { Request, Response } from 'express';
-
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 const root = path.resolve('./APPS/');
 
@@ -48,18 +45,17 @@ router.put('/remove', async (req: Request, res: Response) => {
 
 router.put('/push', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  res.json(await apps[req.query.name].instance.push());
+  res.json(await apps[req.query.name].instance.pipeline());
 });
 
 router.put('/start', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  res.json(await apps[req.query.name].instance.start());
+  res.json({ status: await apps[req.query.name].instance.start() });
 });
 
 router.put('/stop', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  apps[req.query.name].instance.stop();
-  res.json(await apps[req.query.name].instance.stop());
+  res.json({ status: await apps[req.query.name].instance.stop() });
 });
 
 router.put('/running', async (req: Request, res: Response) => {

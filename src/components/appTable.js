@@ -6,6 +6,7 @@ import {Dialog} from 'react-toolbox/lib/dialog';
 import {Input} from 'react-toolbox/lib/input';
 import {PulseLoader} from 'halogen';
 import TextBlock from './textBlock';
+import { Snackbar } from 'react-toolbox';
 
 
 export default class AppTable extends React.Component {
@@ -17,7 +18,9 @@ export default class AppTable extends React.Component {
             addActive: false,
             name: '',
             loading: false,
-            response: ''
+            response: '',
+            snackActive: false,
+            snackContent: ''
         };
         this.actions = [
             { label: 'Close', onClick: () => this.openApp()},
@@ -48,9 +51,13 @@ export default class AppTable extends React.Component {
     startapp(name, x){
         axios.put(this.api + '/start?name=' + name)
             .then((response) => {
-                let newdata = this.state.data;
-                newdata[x].running = true;
-                this.setState({data: newdata});
+                if(response.data.status){
+                  let newdata = this.state.data;
+                  newdata[x].running = true;
+                  this.setState({data: newdata, snackContent: 'App successfully started', snackActive: true});
+                }else{
+
+                }
             })
             .catch((err) => {
                 console.log(err);
@@ -60,9 +67,11 @@ export default class AppTable extends React.Component {
     stopapp(name, x){
         axios.put(this.api + '/stop?name=' + name)
             .then((response) => {
-                let newdata = this.state.data;
-                newdata[x].running = false;
-                this.setState({data: newdata});
+                if(response.data.status){
+                  let newdata = this.state.data;
+                  newdata[x].running = false;
+                  this.setState({data: newdata, snackContent: 'App successfully stopped', snackActive: true});
+                }
             })
             .catch((err) => {
                 console.log(err);
@@ -78,6 +87,10 @@ export default class AppTable extends React.Component {
             .catch((err) => {
                 alert(err);
             })
+    }
+
+    handleSnack(){
+      this.setState({ snackActive: false });
     }
 
     componentDidMount(){
@@ -110,6 +123,15 @@ export default class AppTable extends React.Component {
                 )}
                 </tbody>
             </table>
+              <Snackbar
+                action=''
+                label={this.state.snackContent}
+                ref='snackbar'
+                type='accept'
+                active={this.state.snackActive}
+                timeout={3000}
+                onTimeout={() => {this.handleSnack()}}
+              />
             </div>
         )
     }

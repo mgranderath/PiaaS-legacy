@@ -32,6 +32,7 @@
     "node-sass": "^4.5.3",
     "nodemon": "^1.11.0",
     "parallelshell": "^3.0.1",
+    "portastic": "^1.0.1",
     "ps-node": "^0.1.6",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",

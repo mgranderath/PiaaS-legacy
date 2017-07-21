@@ -1,9 +1,9 @@
-import { create } from 'domain';
+import { runInThisContext } from 'vm';
 const exec = require('child_process').exec;
 const path = require('path');
 const fs = require('fs-extra');
 const tar = require('tar-fs');
-import { log, createFile, onClose, createDockerfile, getConfig } from './helper';
+import { log, createFile, onClose, createDockerfile, getConfig, getPort } from './helper';
 const Docker = require('dockerode-promise-wrapper');
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
@@ -23,147 +23,200 @@ export class App {
     };
   }
 
-  init = async () => {
-    if (await !fs.exists(this.root)) {
-      try {
+  initDir = async () : Promise<string> => {
+    try {
+      if (await !fs.exists(this.root)) {
         await fs.mkdir(this.root);
         for (const key in this.dirs) {
           await fs.mkdir(this.dirs[key]);
         }
-        const git = await this.initGit();
-        if (git === true) {
-          return { status: true, message: 'App successfully created!', repo: path.resolve(this.dirs['repo']) };
-        }else {
-          return { status: false, error: 'Error while initalizing git' };
-        }
-      }catch (err) {
-        return { status: false, error: 'Error while creating directories' };
+        return 'success';
+      } else {
+        return 'exists';
       }
-    }else {
-      return { status: false, error: 'App already exists!' };
+    } catch (err) {
+      return 'err';
     }
   }
 
-  initGit = async () => {
-    let hookpath = path.resolve(this.dirs['repo'] + '/hooks/');
+  initGit = async () : Promise<string> => {
+    let hookpath: string = path.resolve(this.dirs['repo'] + '/hooks/');
     try {
       await fs.mkdir(hookpath);
       hookpath = hookpath + '/post-receive';
       const hook = ' #!/bin/sh \n ' +
-                'curl -X PUT -s http://127.0.0.1:8080/api/push?name=' + this.name;
+        'curl -X PUT -s http://127.0.0.1:8080/api/push?name=' + this.name;
       await createFile(hookpath, hook);
       await fs.chmod(hookpath, '0700');
       exec('git init --quiet --bare', { cwd: this.dirs['repo'] }, log);
-      return true;
-    }catch (err) {
-      return false;
+      return 'success';
+    } catch (err) {
+      return 'err';
     }
   }
 
-  remove = async () => {
-    await fs.remove(this.root);
-    try {
-      const container = await docker.getContainer(this.name);
-      await container.remove();
-      const image = await docker.getImage(this.name);
-      await image.remove();
-    }catch (err) {
-
-    }
-    return { message: 'App successfully removed' };
-  }
-
-  push = async () => {
-    let result;
-    if (await fs.exists(this.dirs['srv'] + '/.git')) {
-      const child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
-      result = await onClose(child, this);
+  init = async () : Promise<{}> => {
+    const dir : string = await this.initDir();
+    if (dir === 'success') {
+      if (await this.initGit() === 'success') {
+        return {
+          status: true,
+          message: 'Successfully initialized',
+          repo: path.resolve(this.dirs['repo']),
+        };
+      }else {
+        return {
+          status: false,
+          err: 'Error while Initializing git',
+        };
+      }
     }else {
-      const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']) ,
-                        { cwd: this.root }, log);
-      result = await onClose(child, this);
-    }
-    if (result) {
-      return { status: true, message: 'App successfully pushed' };
-    }else {
-      return { status: false, error: 'Error while pushing' };
+      if (dir === 'exists') {
+        return {
+          status: false,
+          err: 'Error while Initializing Directories - Directories already exist',
+        };
+      }else {
+        return {
+          status: false,
+          err: 'Error while Initializing Directories - Could not create',
+        };
+      }
     }
   }
 
-  deploy = async () => {
-    const config = await getConfig(this.dirs['srv']);
-    const dockerpath = path.resolve(this.dirs['srv'] + '/Dockerfile');
-    const dockerign = path.resolve(this.dirs['srv'] + '/.dockerignore');
-    await createDockerfile(this, config);
+  removeDocker = async () => {
     try {
       const container = await docker.getContainer(this.name);
       await container.remove({ force: true });
       const image = await docker.getImage(this.name);
       await image.remove();
+      return 'success';
     }catch (err) {
-
+      return 'err';
     }
-    const stream = tar.pack(this.dirs['srv']);
-    docker.buildImage(stream, { t: this.name }).then((stream: any) => {
-      const self = this;
-      const createOptions = {
-        Image: this.name,
-        name: this.name,
-        Tty: true,
-        OpenStdin: false,
-        StdinOnce: false,
-        Memory: config.memory * 1024 * 1024,
-        ExposedPorts: { '2999/tcp': {} },
-        PortBindings: { '2999/tcp': [{ HostPort: '5000' }] },
-        Env: [
-          'PORT=2999',
-        ],
-      };
-      docker.modem.followProgress(stream, onFinished);
-      function onFinished(err: string, output: string) {
-        docker.createContainer(createOptions)
-                    .then(async () => {
-                      return await self.start();
-                    })
-                    .catch((err: string) => {
-                      console.log(err);
-                      return false;
-                    });
-      }
-    }).catch((err: string, response: string) => {
-      console.log(err);
+  }
+
+  removeDirs = async () => {
+    try {
+      await fs.remove(this.root);
+      return true;
+    }catch (err) {
+      console.log('Error on Remove');
       return false;
+    }
+  }
+
+  remove = async () => {
+    await this.removeDocker();
+    await this.removeDirs();
+    return true;
+  }
+
+  push = async () : Promise<boolean> => {
+    const exists : boolean = await fs.exists(this.dirs['srv'] + '/.git');
+    if (exists) {
+      const child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
+      return await onClose(child, this);
+    }else {
+      const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']),
+        { cwd: this.root }, log);
+      return await onClose(child, this);
+    }
+  }
+
+  deploy = async () : Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+      const config : any = await getConfig(this.dirs['srv']);
+      const stream = tar.pack(this.dirs['srv']);
+      if (!await createDockerfile(this, config)) {
+        resolve({ status: false });
+      }
+      await this.removeDocker();
+      docker.buildImage(stream, { t: this.name })
+        .then(async (stream: any) => {
+          const port = await getPort().then((data) => { return data.toString(); });
+          console.log(port);
+          const createOptions = {
+            Image: this.name,
+            name: this.name,
+            Tty: true,
+            OpenStdin: false,
+            StdinOnce: false,
+            ExposedPorts: { '3000/tcp': {} },
+            PortBindings: { '3000/tcp': [{ HostPort: port }] },
+            Env: [
+              'PORT=3000',
+            ],
+          };
+          Object.assign(
+            createOptions,
+            config.memory ? { Memory: config.memory * 1024 * 1024 } : null);
+          async function onFinished(err: string, output: string) {
+            docker.createContainer(createOptions)
+              .then(() => {
+                resolve({ status: true, port: port });
+              })
+              .catch(() => {
+                resolve({ status: false });
+              });
+          }
+          docker.modem.followProgress(stream, onFinished);
+        })
+        .catch((err: string, response: string) => {
+          console.log(err);
+          resolve({ status: false });
+        });
     });
   }
 
   start = async () => {
-    try {
-      const container = await docker.getContainer(this.name);
-      container.start((err: string, data: any) => {
-        if (err) {
-          return { status: false, error: 'Error while starting container' };
-        }
-        return { status: true, message: 'Successfully started' };
-      });
-    }catch (err) {
-      console.log(err);
-      return { status: false, error: 'Error while selecting container' };
-    }
+    return new Promise( async (resolve, reject) => {
+      try {
+        const container = await docker.getContainer(this.name);
+        container.start()
+          .then((err: string, data: any) => {
+            if (err) {
+              resolve(false);
+            }
+            resolve(true);
+          });
+      } catch (err) {
+        console.log(err);
+        resolve(false);
+      }
+    });
   }
 
   stop = async () => {
-    try {
-      const container = await docker.getContainer(this.name);
-      container.stop((err: string, data: any) => {
-        if (err) {
-          console.log(err);
-          return { status: false, error: 'Error while stoping container' };
-        }
-        return { status: true, message: 'Successfully stopped' };
-      });
-    }catch (err) {
-      console.log(err);
-      return { status: false, error: 'Error while selecting container' };
+    return new Promise( async (resolve, reject) => {
+      try {
+        const container = await docker.getContainer(this.name);
+        container.stop()
+          .then((err: string, data: any) => {
+            if (err) {
+              resolve(false);
+            }
+            resolve(true);
+          });
+      } catch (err) {
+        console.log(err);
+        resolve(false);
+      }
+    });
+  }
+
+  pipeline = async () => {
+    await this.push();
+    const deploy = (await this.deploy());
+    if (!deploy.status) {
+      return { status: false, error: 'Error while deploying' };
+    }
+    const start = await this.start();
+    if (start) {
+      return { status: true, message: 'Successfully deployed', port: deploy.port };
+    }else{
+      return { status: false, error: 'Error while starting' };
     }
   }
 
