@@ -1,0 +1,14 @@
+{
+  "name": "testapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "/Users/maltegranderath/Desktop/PiaaS/APPS/test/repo",
+  "author": "Malte-Granderath <malte.granderath@ibm.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node test.js"
+  },
+  "dependencies": {
+    "express": "^4.15.3"
+  }
+}

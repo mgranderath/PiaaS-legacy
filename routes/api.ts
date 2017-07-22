@@ -29,8 +29,18 @@ const getAppInfo = async (): Promise<{[name: string]: app}> => {
   return apps;
 };
 
+const getDetails = async () => {
+  const appnames = getAppNames();
+  const details : any = {};
+  for (const item of appnames) {
+    const instance = new App(item);
+    details[item] = (await instance.getInfo());
+  }
+  return details;
+};
+
 router.get('/', async (req: Request, res: Response) => {
-  res.json(await getAppInfo());
+  res.json(await getDetails());
 });
 
 router.put('/add', async (req: Request, res: Response) => {
@@ -56,6 +66,22 @@ router.put('/start', async (req: Request, res: Response) => {
 router.put('/stop', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
   res.json({ status: await apps[req.query.name].instance.stop() });
+});
+
+router.put('/log', async (req: Request, res: Response) => {
+  const apps = await getAppInfo();
+  const stream = await apps[req.query.name].instance.logs();
+  stream.pipe(res);
+  stream.on('data', (data: any) => {
+    res.write(data);
+  });
+  stream.on('end', () => {
+    res.end();
+  });
+  setTimeout(() => {
+    stream.destroy();
+    res.end();
+  }, 500);
 });
 
 router.put('/running', async (req: Request, res: Response) => {

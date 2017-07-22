@@ -1,9 +1,8 @@
 import React from 'react';
 import '../styles/app.css';
-import axios from 'axios';
-import {Button} from 'react-toolbox/lib/button';
-import AppTable from './appTable';
-import {AppBar} from 'react-toolbox/lib/app_bar';
+import AppTable from './apptable.jsx';
+import Nav from './nav.jsx';
+import Toolbar from './toolbar.jsx';
 
 export default class App extends React.Component {
     constructor(props){
@@ -17,7 +16,8 @@ export default class App extends React.Component {
     render(){
         return (
             <div>
-                <AppBar title='PiaaS' leftIcon='menu'></AppBar>
+                <Nav/>
+                <Toolbar/>
                 <AppTable/>
             </div>
         )

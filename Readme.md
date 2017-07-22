@@ -6,9 +6,11 @@ Project Status:
 
 - [x] Create, push and run node js projects
 - [ ] Config file
-- [ ] Automatic Port Selection
+- [x] Automatic Port Selection
 - [ ] Write tests
 - [ ] Add example applications
 - [ ] Write Documentation
+- [ ] Healthcheck and Auto restart
+- [ ] Access to log files
 
 More will be added soon

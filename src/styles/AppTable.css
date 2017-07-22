@@ -1,9 +1,7 @@
-table {
-    box-shadow: 0 0 3px #999;
-    margin: 20px;
+.circle-active {
+    color: greenyellow;
 }
 
-td {
-    text-align: center;
-    padding: 5px;
+.circle-stopped {
+    color: red;
 }

@@ -1,0 +1,5 @@
+web: node test.js
+memory: 128
+restart: 
+    on: true
+    retries: 2

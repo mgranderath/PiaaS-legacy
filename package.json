@@ -23,7 +23,6 @@
     "css-loader": "^0.28.4",
     "dedent-js": "^1.0.1",
     "dockerode": "^2.5.0",
-    "dockerode-promise-es6": "^1.1.0",
     "dockerode-promise-wrapper": "^1.2.0",
     "ejs": "^2.5.6",
     "express": "^4.15.3",

@@ -1,0 +1,12 @@
+@import "mixin";
+
+.is-primary {
+  background-color: $color2 !important;
+  &:hover {
+    background-color: $color1 !important;
+  }
+}
+
+.section {
+  padding: 2rem 1.5rem;
+}

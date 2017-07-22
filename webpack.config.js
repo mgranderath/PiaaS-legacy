@@ -8,7 +8,7 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /\.(js|jsx)$/,
                 exclude: [/node_modules/],
                 use: {
                     loader: 'babel-loader',
@@ -21,7 +21,7 @@ module.exports = {
                 test: /(\.scss|\.css)$/,
                 loaders: [
                     require.resolve('style-loader'),
-                    require.resolve('css-loader') + '?sourceMap&modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]',
+                    require.resolve('css-loader'),
                     require.resolve('sass-loader') + '?sourceMap'
                 ]
             }

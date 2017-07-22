@@ -1462,10 +1462,6 @@ docker-modem@^1.0.0:
     readable-stream "~1.0.26-4"
     split-ca "^1.0.0"
 
-dockerode-promise-es6@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/dockerode-promise-es6/-/dockerode-promise-es6-1.1.0.tgz#4a51b4e8ab798f75d7635093230884767414b43e"
-
 dockerode-promise-wrapper@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/dockerode-promise-wrapper/-/dockerode-promise-wrapper-1.2.0.tgz#f1e540f053b008334aa5edb21898b3af0a20786a"

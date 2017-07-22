@@ -1,0 +1,21 @@
+@import "mixin";
+
+#navbar {
+  background-color: $color2;
+  > .level-item {
+    color: #fff !important;
+    > a {
+      color: #fff !important;
+    }
+  }
+}
+
+.big-text {
+  font-size: 40px;
+}
+.navbar-item {
+  color: #fff;
+  &:hover {
+    background-color: $color1 !important;
+  }
+}

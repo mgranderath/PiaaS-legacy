@@ -1,8 +1,8 @@
-import { runInThisContext } from 'vm';
 const exec = require('child_process').exec;
 const path = require('path');
 const fs = require('fs-extra');
 const tar = require('tar-fs');
+const stream = require('stream');
 import { log, createFile, onClose, createDockerfile, getConfig, getPort } from './helper';
 const Docker = require('dockerode-promise-wrapper');
 
@@ -23,9 +23,19 @@ export class App {
     };
   }
 
+  getInfo = async () => {
+    return {
+      name: this.name,
+      root: this.root,
+      running: await this.isRunning(),
+      type: await this.type(),
+    };
+  }
+
   initDir = async () : Promise<string> => {
+    const exists = await fs.exists(this.root);
     try {
-      if (await !fs.exists(this.root)) {
+      if (!exists) {
         await fs.mkdir(this.root);
         for (const key in this.dirs) {
           await fs.mkdir(this.dirs[key]);
@@ -35,6 +45,7 @@ export class App {
         return 'exists';
       }
     } catch (err) {
+      console.log(err);
       return 'err';
     }
   }
@@ -55,8 +66,9 @@ export class App {
     }
   }
 
-  init = async () : Promise<{}> => {
+  init = async () : Promise<any> => {
     const dir : string = await this.initDir();
+    console.log(dir);
     if (dir === 'success') {
       if (await this.initGit() === 'success') {
         return {
@@ -143,6 +155,10 @@ export class App {
             Tty: true,
             OpenStdin: false,
             StdinOnce: false,
+            RestartPolicy: {
+              MaximumRetryCount: 2,
+              Name: 'on-failure',
+            },
             ExposedPorts: { '3000/tcp': {} },
             PortBindings: { '3000/tcp': [{ HostPort: port }] },
             Env: [
@@ -155,7 +171,7 @@ export class App {
           async function onFinished(err: string, output: string) {
             docker.createContainer(createOptions)
               .then(() => {
-                resolve({ status: true, port: port });
+                resolve({ status: true, port });
               })
               .catch(() => {
                 resolve({ status: false });
@@ -171,7 +187,7 @@ export class App {
   }
 
   start = async () => {
-    return new Promise( async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const container = await docker.getContainer(this.name);
         container.start()
@@ -189,7 +205,7 @@ export class App {
   }
 
   stop = async () => {
-    return new Promise( async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const container = await docker.getContainer(this.name);
         container.stop()
@@ -215,7 +231,7 @@ export class App {
     const start = await this.start();
     if (start) {
       return { status: true, message: 'Successfully deployed', port: deploy.port };
-    }else{
+    }else {
       return { status: false, error: 'Error while starting' };
     }
   }
@@ -238,6 +254,22 @@ export class App {
     }else {
       return { type: 'not detected' };
     }
+  }
+
+  logs = () : Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+      const container = await docker.getContainer(this.name);
+      container.logs({
+        follow: true,
+        stdout: true,
+        stderr: true,
+      }, (err: any, stream: any) => {
+        if (err) {
+          resolve(stream);
+        }
+        resolve(stream);
+      });
+    });
   }
 
 }
