@@ -16,7 +16,7 @@ export default class Nav extends React.Component {
           PiaaS
         </p>
         <p className="level-item has-text-centered">
-          <a className="link is-info">Github</a>
+          <a className="link is-info" href="https://github.com/magrandera/PiaaS">Github</a>
         </p>
       </nav>
     )

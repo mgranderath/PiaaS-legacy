@@ -2,7 +2,7 @@ import React from 'react';
 import '../styles/app.css';
 import AppTable from './apptable.jsx';
 import Nav from './nav.jsx';
-import Toolbar from './toolbar.jsx';
+import ToolbarContainer from './toolbar.jsx';
 
 export default class App extends React.Component {
     constructor(props){
@@ -17,7 +17,7 @@ export default class App extends React.Component {
         return (
             <div>
                 <Nav/>
-                <Toolbar/>
+                <ToolbarContainer/>
                 <AppTable/>
             </div>
         )
