@@ -2,18 +2,35 @@ import React from 'react';
 import '../styles/toolbar.scss';
 import { store, fetchApps } from '../redux';
 import { connect } from 'react-redux';
+import axios from 'axios';
 
 class Toolbar extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       addActive: false,
+      name: ''
     }
   }
 
   toggleModal(){
     this.setState({addActive: !this.state.addActive});
-    fetchApps();
+    store.dispatch(fetchApps());
+  }
+
+  addApp(){
+    axios.put('api/add?name=' + this.state.name)
+      .then((response) => {
+        store.dispatch(fetchApps());
+        this.toggleModal();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  handleApp(target){
+    this.setState({name: target.target.value});
   }
 
   render(){
@@ -35,10 +52,10 @@ class Toolbar extends React.Component {
                 <button className="delete" onClick={() => {this.toggleModal()}}></button>
               </header>
               <section className="modal-card-body">
-                <input className="input" type="text" placeholder="App name" />
+                <input className="input" type="text" placeholder="App name" value={this.state.name} onChange={(evt) => this.handleApp(evt) }/>
               </section>
               <footer className="modal-card-foot">
-                <a className="button is-success">Save changes</a>
+                <a className="button is-success" onClick={() => { this.addApp() }}>Save changes</a>
                 <a className="button">Cancel</a>
               </footer>
             </div>

@@ -10,5 +10,5 @@ ReactDOM.render(
   <Provider store={store}>
   <App></App>
   </Provider>,
-  app
+  container
 );

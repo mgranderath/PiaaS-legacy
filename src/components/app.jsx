@@ -3,6 +3,7 @@ import '../styles/app.css';
 import AppTable from './apptable.jsx';
 import Nav from './nav.jsx';
 import ToolbarContainer from './toolbar.jsx';
+import { store } from '../redux';
 
 export default class App extends React.Component {
     constructor(props){

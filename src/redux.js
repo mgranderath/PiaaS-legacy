@@ -8,11 +8,38 @@ export const fetchApps = () => {
   return function(dispatch) {
     axios.get('/api')
       .then((result) => {
-        console.log(result.data);
         dispatch({
           type: 'GET_APPS_DATA',
           payload: result.data
         });
+      })
+      .catch((err) => {
+        throw(err);
+      })
+  };
+};
+
+export const startApp = (name) => {
+  return function(dispatch) {
+    dispatch({type: 'APP_LOADING', name: name});
+    axios.put('/api/start?name=' + name)
+      .then((result) => {
+        dispatch({type: 'APP_DONE',name: name});
+        dispatch(fetchApps());
+      })
+      .catch((err) => {
+        throw(err);
+      })
+  };
+};
+
+export const stopApp = (name) => {
+  return function(dispatch) {
+    dispatch({type: 'APP_LOADING', name: name});
+    axios.put('/api/stop?name=' + name)
+      .then((result) => {
+        dispatch({type: 'APP_DONE', name: name});
+        dispatch(fetchApps());
       })
       .catch((err) => {
         throw(err);
@@ -32,8 +59,29 @@ export const apps = (state = {}, action) => {
   }
 };
 
+export const loading = (state = {}, action) => {
+  switch (action.type) {
+    case 'APP_LOADING':
+      let newState = {
+        ...state,
+      };
+      newState[action.name] = true;
+      return newState;
+    case 'APP_DONE':
+      newState = {
+        ...state,
+      };
+      newState[action.name] = false;
+      return newState;
+    default:
+      return {};
+      break;
+  }
+};
+
 export const reducers = combineReducers({
   apps,
+  loading
 });
 
 // store.js
