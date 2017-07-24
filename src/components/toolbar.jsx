@@ -9,20 +9,20 @@ class Toolbar extends React.Component {
     super(props);
     this.state = {
       addActive: false,
-      name: ''
+      name: '',
+      dir: ''
     }
   }
 
   toggleModal(){
-    this.setState({addActive: !this.state.addActive});
-    store.dispatch(fetchApps());
+    this.setState({addActive: !this.state.addActive, name: '', dir: ''});
   }
 
   addApp(){
     axios.put('api/add?name=' + this.state.name)
       .then((response) => {
+        this.setState({dir: response.data.repo});
         store.dispatch(fetchApps());
-        this.toggleModal();
       })
       .catch((err) => {
         console.log(err);
@@ -53,10 +53,17 @@ class Toolbar extends React.Component {
               </header>
               <section className="modal-card-body">
                 <input className="input" type="text" placeholder="App name" value={this.state.name} onChange={(evt) => this.handleApp(evt) }/>
+                { this.state.dir !== '' ? <div className="box">{ this.state.dir }</div> : '' }
               </section>
               <footer className="modal-card-foot">
-                <a className="button is-success" onClick={() => { this.addApp() }}>Save changes</a>
-                <a className="button">Cancel</a>
+                {this.state.dir !== '' ? (
+                    <a className="button" onClick={() => {this.toggleModal()}}>OK</a>
+                  ) : (
+                    <div>
+                    <a className="button is-success" onClick={() => { this.addApp() }}>Save changes</a><a className="button" onClick={() => { this.toggleModal() }}>Cancel</a>
+                    </div>
+                  )
+                }
               </footer>
             </div>
           </div>

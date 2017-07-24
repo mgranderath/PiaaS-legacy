@@ -50,7 +50,7 @@ router.put('/add', async (req: Request, res: Response) => {
 
 router.put('/remove', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  res.json({ message: await apps[req.query.name].instance.remove() });
+  res.json({ status: await apps[req.query.name].instance.remove() });
 });
 
 router.put('/push', async (req: Request, res: Response) => {

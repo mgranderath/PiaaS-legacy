@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '../styles/nav.scss';
 
 export default class Nav extends React.Component {
@@ -10,7 +11,7 @@ export default class Nav extends React.Component {
     return (
       <nav id="navbar" className="level">
         <p className="level-item has-text-centered">
-          <a className="link is-info">Home</a>
+          <Link to="/" className="link is-info">Home</Link>
         </p>
         <p className="level-item big-text has-text-centered">
           PiaaS

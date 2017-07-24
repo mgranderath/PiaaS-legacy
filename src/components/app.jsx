@@ -3,9 +3,9 @@ import '../styles/app.css';
 import AppTable from './apptable.jsx';
 import Nav from './nav.jsx';
 import ToolbarContainer from './toolbar.jsx';
-import { store } from '../redux';
+import Dashboard from './dashboard.jsx';
 
-export default class App extends React.Component {
+export class Apps extends React.Component {
     constructor(props){
         super(props);
         this.api = '/api';
@@ -24,3 +24,26 @@ export default class App extends React.Component {
         )
     }
 }
+
+export class App extends React.Component {
+
+  constructor(props){
+    super(props);
+    this.api = '/api';
+    this.state = {
+      name: this.props.match.params.name,
+    }
+  }
+
+  render(){
+    return (
+      <div>
+        <Nav/>
+        <div className="container">
+          <Dashboard/>
+        </div>
+      </div>
+    )
+  }
+}
+

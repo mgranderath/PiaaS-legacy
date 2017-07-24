@@ -68,7 +68,6 @@ export class App {
 
   init = async () : Promise<any> => {
     const dir : string = await this.initDir();
-    console.log(dir);
     if (dir === 'success') {
       if (await this.initGit() === 'success') {
         return {

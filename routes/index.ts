@@ -8,4 +8,9 @@ router.get('/', (req: Request, res: Response) => {
   res.sendFile(path.resolve('./dist/app.html'));
 });
 
+router.get('/app/:name', (req: Request, res: Response) => {
+  console.log('Serving ', req.url);
+  res.sendFile(path.resolve('./dist/app.html'));
+});
+
 module.exports = router;

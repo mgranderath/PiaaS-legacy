@@ -47,6 +47,18 @@ export const stopApp = (name) => {
   };
 };
 
+export const deleteApp = (name) => {
+  return function(dispatch) {
+    axios.put('/api/remove?name=' + name)
+      .then((result) => {
+        dispatch(fetchApps());
+      })
+      .catch((err) => {
+        throw(err);
+      })
+  };
+};
+
 // reducers.js
 
 export const apps = (state = {}, action) => {

@@ -14,3 +14,5 @@ app.set('view engine', 'ejs');
 app.use('/', require('./routes/index'));
 app.use('/api', require('./routes/api'));
 app.listen(port, () => console.log('Listening on port', port));
+
+module.exports = app;
