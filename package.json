@@ -10,7 +10,8 @@
     "build:ts": "nodemon --exec ./node_modules/.bin/ts-node -- ./server.ts",
     "start": "ts-node server.ts",
     "build": "./node_modules/.bin/webpack",
-    "test": "./node_modules/.bin/mocha --require ts-node/register"
+    "test": "nyc --reporter=lcovonly npm run mocha-test && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage --language typescript && rm -rf ./coverage ./.nyc_output",
+    "mocha-test": "./node_modules/.bin/mocha --require ts-node/register --timeout 25000"
   },
   "dependencies": {
     "@types/es6-shim": "^0.31.34",
@@ -22,6 +23,7 @@
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
+    "codacy-coverage": "^2.0.2",
     "css-loader": "^0.28.4",
     "dedent-js": "^1.0.1",
     "dockerode": "^2.5.0",
@@ -54,6 +56,7 @@
     "chai": "^4.1.0",
     "chai-fs": "^1.0.0",
     "chai-http": "^3.0.0",
-    "mocha": "^3.4.2"
+    "mocha": "^3.4.2",
+    "nyc": "^11.0.3"
   }
 }

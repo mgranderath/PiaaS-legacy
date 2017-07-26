@@ -45,7 +45,6 @@ export class App {
         return 'exists';
       }
     } catch (err) {
-      console.log(err);
       return 'err';
     }
   }
@@ -147,7 +146,6 @@ export class App {
       docker.buildImage(stream, { t: this.name })
         .then(async (stream: any) => {
           const port = await getPort().then((data) => { return data.toString(); });
-          console.log(port);
           const createOptions = {
             Image: this.name,
             name: this.name,
@@ -170,9 +168,10 @@ export class App {
           async function onFinished(err: string, output: string) {
             docker.createContainer(createOptions)
               .then(() => {
-                resolve({ status: true, port });
+                resolve({ status: true, port: port });
               })
-              .catch(() => {
+              .catch((err: string) => {
+                console.log(err)
                 resolve({ status: false });
               });
           }
@@ -195,7 +194,10 @@ export class App {
               resolve(false);
             }
             resolve(true);
-          });
+          })
+          .catch((err: string) => {
+            resolve(false);
+          })
       } catch (err) {
         console.log(err);
         resolve(false);
@@ -213,7 +215,10 @@ export class App {
               resolve(false);
             }
             resolve(true);
-          });
+          })
+          .catch((err: string) => {
+            resolve(false);
+          })
       } catch (err) {
         console.log(err);
         resolve(false);
