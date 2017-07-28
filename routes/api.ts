@@ -81,7 +81,7 @@ router.put('/log', async (req: Request, res: Response) => {
   setTimeout(() => {
     stream.destroy();
     res.end();
-  }, 500);
+  },500);
 });
 
 router.put('/running', async (req: Request, res: Response) => {

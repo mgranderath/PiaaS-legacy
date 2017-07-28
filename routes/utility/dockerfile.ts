@@ -1,8 +1,8 @@
-import * as dedent from 'dedent-js';
+const dedent = require('dedent-js');
 
-export function dockerfiles(type, command){
-  command = JSON.stringify(command.split(/[ ,]+/));
-  if(type === 'node') {
+export function dockerfiles(type: any, cmd: string){
+  const command: string = JSON.stringify(cmd.split(/[ ,]+/));
+  if (type === 'node') {
     return dedent(
       `FROM node:7.7.2-alpine
        # Create app directory
@@ -14,18 +14,16 @@ export function dockerfiles(type, command){
       # Bundle app source
       COPY . /usr/src/app
       EXPOSE 8080
-      CMD ${command}`
-    );
-  }else{
+      CMD ${command}`);
+  } else {
     return null;
   }
 }
 
-export let dockerignore = {
-  'node': dedent(
+export let dockerignore : {[name: string]: any} = {
+  node: dedent(
     `
     node_modules
     npm-debug.log
-    `
-  )
+    `),
 };

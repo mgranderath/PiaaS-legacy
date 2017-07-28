@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { dockerfiles, dockerignore } from './dockerfile.js';
+import { dockerfiles, dockerignore } from './dockerfile';
 const portastic = require('portastic');
 const YAML = require('yamljs');
 
@@ -36,7 +36,7 @@ export async function onClose(child: any, self: any) : Promise<any> {
 }
 
 export async function createDockerfile(self: any, config: any) {
-  return new Promise( async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const command = config.web || 'npm start';
     let type = await self.type();
     type = type.type;

@@ -129,8 +129,8 @@ export class App {
       const child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
       return await onClose(child, this);
     }else {
-      const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' ' + path.resolve(this.dirs['srv']),
-        { cwd: this.root }, log);
+      const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' '
+        + path.resolve(this.dirs['srv']), { cwd: this.root }, log);
       return await onClose(child, this);
     }
   }
@@ -168,10 +168,10 @@ export class App {
           async function onFinished(err: string, output: string) {
             docker.createContainer(createOptions)
               .then(() => {
-                resolve({ status: true, port: port });
+                resolve({ status: true, port });
               })
               .catch((err: string) => {
-                console.log(err)
+                console.log(err);
                 resolve({ status: false });
               });
           }
@@ -197,7 +197,7 @@ export class App {
           })
           .catch((err: string) => {
             resolve(false);
-          })
+          });
       } catch (err) {
         console.log(err);
         resolve(false);
@@ -218,7 +218,7 @@ export class App {
           })
           .catch((err: string) => {
             resolve(false);
-          })
+          });
       } catch (err) {
         console.log(err);
         resolve(false);
@@ -263,16 +263,18 @@ export class App {
   logs = () : Promise<any> => {
     return new Promise(async (resolve, reject) => {
       const container = await docker.getContainer(this.name);
-      container.logs({
-        follow: true,
-        stdout: true,
-        stderr: true,
-      }, (err: any, stream: any) => {
-        if (err) {
+      container.logs(
+        {
+          follow: true,
+          stdout: true,
+          stderr: true,
+        },
+        (err: any, stream: any) => {
+          if (err) {
+            resolve(stream);
+          }
           resolve(stream);
-        }
-        resolve(stream);
-      });
+        });
     });
   }
 

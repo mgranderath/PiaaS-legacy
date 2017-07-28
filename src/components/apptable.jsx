@@ -47,7 +47,7 @@ class AppTab extends React.Component {
                 <tbody>
                 {
                   Object.keys(this.props.apps).map((x, i) =>
-                    <tr key={i} onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name)}}>
+                    <tr key={i}>
                       <td>{ this.props.apps[x].name }</td>
                       <td><div className="icon">
                         { this.props.loading[this.props.apps[x].name] ? <img src='loading.gif' height='30px' width='30px' /> :
