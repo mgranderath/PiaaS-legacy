@@ -1,9 +1,9 @@
-import React from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/nav.scss';
 
-export default class Nav extends React.Component {
-  constructor(props) {
+export default class Nav extends React.Component<any, any> {
+  constructor(props: any) {
     super(props);
   }
 
@@ -20,6 +20,6 @@ export default class Nav extends React.Component {
           <a className="link is-info" href="https://github.com/magrandera/PiaaS">Github</a>
         </p>
       </nav>
-    )
+    );
   }
-  }
+}
