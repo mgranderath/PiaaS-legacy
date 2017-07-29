@@ -1,15 +1,18 @@
-import React from 'react';
+import * as React from 'react';
 
 export default class Dashboard extends React.Component {
-  constructor(props){
+  api: string;
+  state: any;
+
+  constructor(props: any) {
     super(props);
     this.api = '/api';
     this.state = {
-      data: []
-    }
+      data: [],
+    };
   }
 
-  render(){
+  render() {
     return (
       <div className="tile is-ancestor">
         <div className="tile is-vertical is-8">
@@ -55,6 +58,6 @@ export default class Dashboard extends React.Component {
           </article>
         </div>
       </div>
-    )
+    );
   }
 }
