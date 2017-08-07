@@ -132,7 +132,6 @@ export class App {
 
   push = async () : Promise<boolean> => {
     const result = await fs.emptyDir(this.dirs['srv']);
-    console.log(result)
     const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' '
       + path.resolve(this.dirs['srv']), { cwd: this.root }, log);
     return await onClose(child, this);

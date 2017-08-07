@@ -4,6 +4,7 @@ import AppTable from './apptable';
 import Nav from './nav';
 import ToolbarContainer from './toolbar';
 import Dashboard from './dashboard';
+import { connect } from 'react-redux';
 
 export class Apps extends React.Component <any, any> {
   api: string;
@@ -28,7 +29,7 @@ export class Apps extends React.Component <any, any> {
   }
 }
 
-export class App extends React.Component <any, any> {
+class Container extends React.Component <any, any> {
   api: string;
   state: any;
 
@@ -45,10 +46,20 @@ export class App extends React.Component <any, any> {
       <div>
         <Nav/>
         <div className="container">
-          <Dashboard/>
+          <Dashboard name={ this.state.name }/>
         </div>
       </div>
     );
   }
 }
+
+const mapStateToProps = (state: any, ownProps: any) => ({
+  apps: state.apps,
+  loading: state.loading,
+});
+
+export const App = connect(
+  mapStateToProps,
+)(Container);
+
 

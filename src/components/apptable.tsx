@@ -50,13 +50,13 @@ class AppTab extends React.Component<any, any> {
                 {
                   Object.keys(this.props.apps).map((x, i) =>
                     <tr key={i}>
-                      <td>{ this.props.apps[x].name }</td>
-                      <td><div className="icon">
+                      <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.props.apps[x].name }</td>
+                      <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}><div className="icon">
                         { this.props.loading[this.props.apps[x].name] ? <img src="loading.gif" height="30px" width="30px" /> :
                         this.props.apps[x].running ?
                           <i className="fa fa-circle circle-active" title="Running" aria-hidden="true"></i> :
                           <i className="fa fa-circle circle-stopped" title="Stopped" aria-hidden="true"></i> }</div></td>
-                      <td>{ this.props.apps[x].type.type === 'node' ? <img src="https://png.icons8.com/nodejs/color/24" title="Nodejs" width="30" height="30" /> : 'undefined' }</td>
+                      <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.props.apps[x].type.type === 'node' ? <img src="https://png.icons8.com/nodejs/color/24" title="Nodejs" width="30" height="30" /> : 'undefined' }</td>
                       <td>
                         <nav className="level">
                         { this.props.apps[x].running ?
