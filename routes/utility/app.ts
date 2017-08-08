@@ -6,7 +6,13 @@ const stream = require('stream');
 import { log, createFile, onClose, createDockerfile, getConfig, getPort } from './helper';
 const Docker = require('dockerode-promise-wrapper');
 
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+const isWin = /^win/.test(process.platform);
+
+if (isWin) {
+  const docker = new Docker({ socketPath: '//./pipe/docker_engine' });
+} else {
+  const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+}
 
 export class App {
   name: string;
@@ -166,7 +172,7 @@ export class App {
           async function onFinished(err: string, output: string) {
             docker.createContainer(createOptions)
               .then(() => {
-                resolve({ status: true, port });
+                resolve({ status: true, port: port });
               })
               .catch((err: string) => {
                 console.log(err);
