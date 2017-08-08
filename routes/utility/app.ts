@@ -8,10 +8,11 @@ const Docker = require('dockerode-promise-wrapper');
 
 const isWin = /^win/.test(process.platform);
 
+let docker: any;
 if (isWin) {
-  const docker = new Docker({ socketPath: '//./pipe/docker_engine' });
+  docker = new Docker({ socketPath: '//./pipe/docker_engine' });
 } else {
-  const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+  docker = new Docker({ socketPath: '/var/run/docker.sock' });
 }
 
 export class App {
