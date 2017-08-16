@@ -1,3 +1,5 @@
+import {resolvePtr} from "dns";
+
 const exec = require('child_process').exec;
 const path = require('path');
 const fs = require('fs-extra');
@@ -183,6 +185,7 @@ export class App {
         })
         .catch((err: string, response: string) => {
           console.log(err);
+          console.log(response);
           resolve({ status: false });
         });
     });
