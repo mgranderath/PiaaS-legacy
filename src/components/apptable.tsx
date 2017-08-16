@@ -33,6 +33,25 @@ class AppTab extends React.Component<any, any> {
     this.props.dispatch(deleteApp(name));
   }
 
+  displayState(state: boolean) {
+    if (state) {
+      return <i className="fa fa-play"></i>;
+    } else {
+      return <i className="fa fa-stop"></i>;
+    }
+  }
+
+  displayType(type: string) {
+    switch (type){
+      case 'node':
+        return <i className="devicon-nodejs-plain"></i>;
+      case 'python':
+        return <i className="devicon-python-plain"></i>;
+      default:
+        return <p>Undefined</p>;
+    }
+  }
+
   render() {
     return (
             <section className="section">
@@ -53,10 +72,8 @@ class AppTab extends React.Component<any, any> {
                       <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.props.apps[x].name }</td>
                       <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}><div className="icon">
                         { this.props.loading[this.props.apps[x].name] ? <img src="loading.gif" height="30px" width="30px" /> :
-                        this.props.apps[x].running ?
-                          <i className="fa fa-circle circle-active" title="Running" aria-hidden="true"></i> :
-                          <i className="fa fa-circle circle-stopped" title="Stopped" aria-hidden="true"></i> }</div></td>
-                      <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.props.apps[x].type.type === 'node' ? <img src="https://png.icons8.com/nodejs/color/24" title="Nodejs" width="30" height="30" /> : 'undefined' }</td>
+                          this.displayState(this.props.apps[x].running) }</div></td>
+                      <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.displayType(this.props.apps[x].type.type) }</td>
                       <td>
                         <nav className="level">
                         { this.props.apps[x].running ?

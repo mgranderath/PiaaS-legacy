@@ -1,0 +1,16 @@
+@import "mixin";
+
+.appTitle {
+  background-color: #eeeeee;
+  padding: 10px 10px;
+  margin-bottom: 0 !important;
+  > .level-item {
+    text-transform: uppercase;
+    font-size: 1.5em;
+  }
+}
+
+.appInfo {
+  background-color: #eeeeee;
+  padding: 10px 10px;
+}
