@@ -19,8 +19,22 @@ export const fetchApps = () => {
   };
 };
 
+export const deployApp = (name: string) => {
+  return function (dispatch: any) {
+    dispatch({ type: 'APP_LOADING', name: name });
+    axios.put('/api/push?name=' + name)
+      .then((result) => {
+        dispatch({type: 'APP_DONE',name: name});
+        dispatch(fetchApps());
+      })
+      .catch((err) => {
+        throw(err);
+      });
+  };
+};
+
 export const startApp = (name: string) => {
-  return function(dispatch: any) {
+  return function (dispatch: any) {
     dispatch({ type: 'APP_LOADING', name: name });
     axios.put('/api/start?name=' + name)
       .then((result) => {

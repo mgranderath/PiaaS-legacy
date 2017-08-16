@@ -33,8 +33,11 @@ class AppTab extends React.Component<any, any> {
     this.props.dispatch(deleteApp(name));
   }
 
-  displayState(state: boolean) {
-    if (state) {
+  displayState(app: any) {
+    if (this.props.loading[app.name]) {
+      return <img src="/loading.gif" height="30px" width="30px" />;
+    }
+    if (app.running) {
       return <i className="fa fa-play"></i>;
     } else {
       return <i className="fa fa-stop"></i>;
@@ -71,8 +74,7 @@ class AppTab extends React.Component<any, any> {
                     <tr key={i}>
                       <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.props.apps[x].name }</td>
                       <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}><div className="icon">
-                        { this.props.loading[this.props.apps[x].name] ? <img src="loading.gif" height="30px" width="30px" /> :
-                          this.displayState(this.props.apps[x].running) }</div></td>
+                        { this.displayState(this.props.apps[x]) }</div></td>
                       <td onClick={() => {this.props.history.push('/app/' + this.props.apps[x].name);}}>{ this.displayType(this.props.apps[x].type.type) }</td>
                       <td>
                         <nav className="level">
