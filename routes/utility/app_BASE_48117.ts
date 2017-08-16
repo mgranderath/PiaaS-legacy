@@ -6,14 +6,7 @@ const stream = require('stream');
 import { log, createFile, onClose, createDockerfile, getConfig, getPort } from './helper';
 const Docker = require('dockerode-promise-wrapper');
 
-const isWin = /^win/.test(process.platform);
-
-let docker: any;
-if (isWin) {
-  docker = new Docker({ socketPath: '//./pipe/docker_engine' });
-} else {
-  docker = new Docker({ socketPath: '/var/run/docker.sock' });
-}
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 export class App {
   name: string;
@@ -131,20 +124,23 @@ export class App {
   }
 
   push = async () : Promise<boolean> => {
-    const result = await fs.emptyDir(this.dirs['srv']);
-    const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' '
-      + path.resolve(this.dirs['srv']), { cwd: this.root }, log);
-    return await onClose(child, this);
+    const exists : boolean = await fs.exists(this.dirs['srv'] + '/.git');
+    if (exists) {
+      const child = exec('git pull --quiet', { cwd: this.dirs['srv'] }, log);
+      return await onClose(child, this);
+    }else {
+      const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' '
+        + path.resolve(this.dirs['srv']), { cwd: this.root }, log);
+      return await onClose(child, this);
+    }
   }
 
   deploy = async () : Promise<any> => {
     return new Promise(async (resolve, reject) => {
       const config : any = await getConfig(this.dirs['srv']);
       const stream = tar.pack(this.dirs['srv']);
-      if (!fs.existsSync(this.dirs['srv'] + '/Dockerfile')) {
-        if (!await createDockerfile(this, config)) {
-          resolve({ status: false });
-        }
+      if (!await createDockerfile(this, config)) {
+        resolve({ status: false });
       }
       await this.removeDocker();
       docker.buildImage(stream, { t: this.name })
@@ -172,7 +168,7 @@ export class App {
           async function onFinished(err: string, output: string) {
             docker.createContainer(createOptions)
               .then(() => {
-                resolve({ status: true, port: port });
+                resolve({ status: true, port });
               })
               .catch((err: string) => {
                 console.log(err);
@@ -272,12 +268,10 @@ export class App {
           follow: true,
           stdout: true,
           stderr: true,
-          timestamps: true,
-          tail: 200,
         },
         (err: any, stream: any) => {
           if (err) {
-            reject(err);
+            resolve(stream);
           }
           resolve(stream);
         });

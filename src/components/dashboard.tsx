@@ -1,6 +1,10 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import '../styles/dashboard.scss';
+import { startApp, stopApp, deployApp } from '../redux';
+import axios from 'axios';
 
-export default class Dashboard extends React.Component {
+class Dashbrd extends React.Component<any, any> {
   api: string;
   state: any;
 
@@ -8,56 +12,126 @@ export default class Dashboard extends React.Component {
     super(props);
     this.api = '/api';
     this.state = {
-      data: [],
+      name: this.props.name,
+      log: null,
     };
+    this.displayLog();
+  }
+
+  displayType(type: string) {
+    switch (type){
+      case 'node':
+        return <i className="devicon-nodejs-plain"></i>;
+      case 'python':
+        return <i className="devicon-python-plain"></i>;
+      default:
+        return <p>Undefined</p>;
+    }
+  }
+
+  displayState(app: any) {
+    if (this.props.loading[app.name]) {
+      return <img src="../loading.gif" height="30px" width="30px" />;
+    }
+    if (app.running) {
+      return <i className="fa fa-play"></i>;
+    } else {
+      return <i className="fa fa-stop"></i>;
+    }
+  }
+
+  displayLog() {
+    axios.put('/api/log?name=' + this.state.name)
+      .then((result: any) => {
+        this.setState({ log: result.data });
+      })
+      .catch((err) => {
+        this.setState({ log: err.data });
+      });
+  }
+
+  start(name: string) {
+    this.props.dispatch(startApp(name));
+  }
+
+  stop(name: string) {
+    this.props.dispatch(stopApp(name));
+  }
+
+  deploy(name: string) {
+    this.props.dispatch(deployApp(name));
+  }
+
+  displayActions(app: any) {
+    let actions = null;
+    if (!app) {
+      return actions;
+    }
+    if (app.running) {
+      actions = <button type="button" className="button is-primary" onClick={() => {this.stop(app.name);}}>Stop</button>;
+    }else if (app.type.type) {
+      actions = <button type="button" className="button is-primary" onClick={() => {this.start(app.name);}}>Start</button>;
+    }
+    return actions;
   }
 
   render() {
     return (
-      <div className="tile is-ancestor">
-        <div className="tile is-vertical is-8">
-          <div className="tile">
-            <div className="tile is-parent is-vertical">
-              <article className="tile is-child notification is-primary">
-                <p className="title">Vertical...</p>
-                <p className="subtitle">Top tile</p>
-              </article>
-              <article className="tile is-child notification is-warning">
-                <p className="title">...tiles</p>
-                <p className="subtitle">Bottom tile</p>
-              </article>
-            </div>
-            <div className="tile is-parent">
-              <article className="tile is-child notification is-info">
-                <p className="title">Middle tile</p>
-                <p className="subtitle">With an image</p>
-                <figure className="image is-4by3">
-                  <img src="http://bulma.io/images/placeholders/640x480.png" />
-                </figure>
-              </article>
+      <div className="container">
+        <nav className="level appTitle">
+          <h1 className="level-item has-text-centered">
+            { this.props.apps[this.state.name] && this.props.apps[this.state.name].name }
+          </h1>
+        </nav>
+        <nav className="level appInfo">
+          <div className="level-item has-text-centered">
+            <div>
+              <p className="heading">Type</p>
+              <h2>
+                { this.props.apps[this.state.name] &&
+                  this.displayType(this.props.apps[this.state.name].type.type) }
+              </h2>
             </div>
           </div>
-          <div className="tile is-parent">
-            <article className="tile is-child notification is-danger">
-              <p className="title">Wide tile</p>
-              <p className="subtitle">Aligned with the right tile</p>
-              <div className="content">
-              </div>
-            </article>
-          </div>
-        </div>
-        <div className="tile is-parent">
-          <article className="tile is-child notification is-success">
-            <div className="content">
-              <p className="title">Tall tile</p>
-              <p className="subtitle">With even more content</p>
-              <div className="content">
-
+          <div className="level-item has-text-centered">
+            <div>
+              <p className="heading">Actions</p>
+              <div>
+                { this.displayActions(this.props.apps[this.state.name]) }
+                <button type="button" className="button is-primary" onClick={() => { this.deploy(this.state.name); }}>Deploy</button>
               </div>
             </div>
-          </article>
+          </div>
+          <div className="level-item has-text-centered">
+            <div>
+              <p className="heading">Running</p>
+              <h2>
+                { this.props.apps[this.state.name] && this.displayState(this.props.apps[this.state.name]) }
+              </h2>
+            </div>
+          </div>
+        </nav>
+        <div className="columns dashboard-columns">
+          <div className="column is-one-third">
+            <h3 className="title">Info</h3>
+          </div>
+          <div className="column">
+            <h3 className="title">Log</h3>
+            <div className="log">{ this.state.log }</div>
+          </div>
         </div>
       </div>
     );
   }
 }
+
+const mapStateToProps = (state: any, ownProps: any) => ({
+  apps: state.apps,
+  loading: state.loading,
+});
+
+const Dashboard = connect(
+  mapStateToProps,
+)(Dashbrd);
+
+export default Dashboard;

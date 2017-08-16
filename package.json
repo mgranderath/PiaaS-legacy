@@ -2,7 +2,7 @@
   "name": "PiaaS",
   "version": "1.0.0",
   "description": "PaaS for Raspberry Pi",
-  "main": "index.js",
+  "main": "server.ts",
   "author": "Malte Granderath",
   "license": "MIT",
   "scripts": {
@@ -12,6 +12,9 @@
     "build": "./node_modules/.bin/webpack",
     "test": "nyc --reporter=lcovonly --require ts-node/register --extension '.ts' npm run mocha-test && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage ./.nyc_output",
     "mocha-test": "./node_modules/.bin/mocha --require ts-node/register --timeout 25000"
+  },
+  "engines": {
+    "node": ">=8.0"
   },
   "dependencies": {
     "@types/es6-shim": "^0.31.34",
