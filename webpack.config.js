@@ -5,6 +5,10 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
         filename: 'app.bundle.js',
     },
+    devtool: "source-map",
+    resolve: {
+      extensions: [".ts", ".tsx", ".js"]
+    },
     module: {
         rules: [
             {
@@ -24,7 +28,17 @@ module.exports = {
                     require.resolve('css-loader'),
                     require.resolve('sass-loader') + '?sourceMap'
                 ]
+            },
+            {
+                test: /\.tsx?$/,
+                loader: "awesome-typescript-loader"
+            },
+            {
+                enforce: "pre",
+                test: /\.js$/,
+                loader: "source-map-loader"
             }
         ]
-    }
+    },
+
 };
