@@ -272,10 +272,12 @@ export class App {
           follow: true,
           stdout: true,
           stderr: true,
+          timestamps: true,
+          tail: 200,
         },
         (err: any, stream: any) => {
           if (err) {
-            resolve(stream);
+            reject(err);
           }
           resolve(stream);
         });

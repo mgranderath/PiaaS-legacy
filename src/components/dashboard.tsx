@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import '../styles/dashboard.scss';
 import { startApp, stopApp, deployApp } from '../redux';
+import axios from 'axios';
 
 class Dashbrd extends React.Component<any, any> {
   api: string;
@@ -12,7 +13,9 @@ class Dashbrd extends React.Component<any, any> {
     this.api = '/api';
     this.state = {
       name: this.props.name,
+      log: null,
     };
+    this.displayLog();
   }
 
   displayType(type: string) {
@@ -35,6 +38,16 @@ class Dashbrd extends React.Component<any, any> {
     } else {
       return <i className="fa fa-stop"></i>;
     }
+  }
+
+  displayLog() {
+    axios.put('/api/log?name=' + this.state.name)
+      .then((result: any) => {
+        this.setState({ log: result.data });
+      })
+      .catch((err) => {
+        this.setState({ log: err.data });
+      });
   }
 
   start(name: string) {
@@ -98,6 +111,15 @@ class Dashbrd extends React.Component<any, any> {
             </div>
           </div>
         </nav>
+        <div className="columns dashboard-columns">
+          <div className="column is-one-third">
+            <h3 className="title">Info</h3>
+          </div>
+          <div className="column">
+            <h3 className="title">Log</h3>
+            <div className="log">{ this.state.log }</div>
+          </div>
+        </div>
       </div>
     );
   }

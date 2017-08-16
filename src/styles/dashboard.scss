@@ -14,3 +14,23 @@
   background-color: #eeeeee;
   padding: 10px 10px;
 }
+
+.dashboard-columns {
+  > .column {
+    background-color: #eeeeee;
+    margin: 0 15px;
+    padding: 10px 10px;
+  }
+}
+
+.container {
+  height: 100%;
+}
+
+.log {
+  white-space: pre-line;
+  padding: 5px 5px;
+  max-height: 500px;
+  overflow-y: scroll;
+  background-color: #fff;
+}
