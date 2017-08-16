@@ -1,24 +1,24 @@
-import React from 'react';
+import * as React from 'react';
 import '../styles/toolbar.scss';
 import { store, fetchApps } from '../redux';
 import { connect } from 'react-redux';
 import axios from 'axios';
 
-class Toolbar extends React.Component {
-  constructor(props){
+class Toolbar extends React.Component<any, any> {
+  constructor(props: any) {
     super(props);
     this.state = {
       addActive: false,
       name: '',
-      dir: ''
-    }
+      dir: '',
+    };
   }
 
-  toggleModal(){
-    this.setState({addActive: !this.state.addActive, name: '', dir: ''});
+  toggleModal() {
+    this.setState({ addActive: !this.state.addActive, name: '', dir: '' });
   }
 
-  addApp(){
+  addApp() {
     axios.put('api/add?name=' + this.state.name)
       .then((response) => {
         this.setState({dir: response.data.repo});
@@ -29,8 +29,8 @@ class Toolbar extends React.Component {
       });
   }
 
-  handleApp(target){
-    this.setState({name: target.target.value});
+  handleApp(target: any) {
+    this.setState({ name: target.target.value });
   }
 
   render(){
@@ -38,7 +38,7 @@ class Toolbar extends React.Component {
       <section className="container">
       <nav className="level">
         <div className="level-left">
-          <button type="submit" className="level-item has-text-centered button is-primary" onClick={() => { this.toggleModal() }} >
+          <button type="submit" className="level-item has-text-centered button is-primary" onClick={() => { this.toggleModal(); }} >
             <span className="icon">
               <i className="fa fa-plus" aria-hidden="true"></i>
             </span>
@@ -60,7 +60,7 @@ class Toolbar extends React.Component {
                     <a className="button" onClick={() => {this.toggleModal()}}>OK</a>
                   ) : (
                     <div>
-                    <a className="button is-success" onClick={() => { this.addApp() }}>Save changes</a><a className="button" onClick={() => { this.toggleModal() }}>Cancel</a>
+                    <a className="button is-success" onClick={() => { this.addApp() }}>Save changes</a><a className="button" onClick={() => { this.toggleModal(); }}>Cancel</a>
                     </div>
                   )
                 }
@@ -74,7 +74,7 @@ class Toolbar extends React.Component {
   }
 }
 
-const mapStateToProps = (state, ownProps) => ({
+const mapStateToProps = (state: any, ownProps: any) => ({
   apps: state.apps,
 });
 

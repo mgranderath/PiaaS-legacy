@@ -1,4 +1,5 @@
-*.bundle.js
+app.bundle.js
+*.map
 node_modules
 APPS
 .idea

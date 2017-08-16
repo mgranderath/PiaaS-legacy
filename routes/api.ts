@@ -72,12 +72,6 @@ router.put('/log', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
   const stream = await apps[req.query.name].instance.logs();
   stream.pipe(res);
-  stream.on('data', (data: any) => {
-    res.write(data);
-  });
-  stream.on('end', () => {
-    res.end();
-  });
   setTimeout(() => {
     stream.destroy();
     res.end();
