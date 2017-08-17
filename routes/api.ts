@@ -71,7 +71,7 @@ router.put('/add', async (req: Request, res: Response) => {
  */
 router.put('/remove', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  res.json({ status: await apps[req.query.name].instance.remove() });
+  res.json(await apps[req.query.name].instance.remove());
 });
 
 /**
@@ -87,7 +87,7 @@ router.put('/push', async (req: Request, res: Response) => {
  */
 router.put('/start', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  res.json({ status: await apps[req.query.name].instance.start() });
+  res.json(await apps[req.query.name].instance.start());
 });
 
 /**
@@ -95,7 +95,7 @@ router.put('/start', async (req: Request, res: Response) => {
  */
 router.put('/stop', async (req: Request, res: Response) => {
   const apps = await getAppInfo();
-  res.json({ status: await apps[req.query.name].instance.stop() });
+  res.json(await apps[req.query.name].instance.stop());
 });
 
 /**

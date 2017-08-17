@@ -20,8 +20,8 @@ export function log(error: string, stdout: string, stderr: string) : void {
 
 /**
  * Creates a File at path with content
- * @param {string} path - path to directory
- * @param {string} content - content for file
+ * @param {string} path
+ * @param {string} content
  * @returns {Promise<boolean>}
  */
 export async function createFile(path: string, content: string) : Promise<boolean> {
@@ -45,9 +45,9 @@ export async function getConfig(path: string) : Promise<{}> {
 
 /**
  * Resolves once a execution has stopped
- * @param child - child process
- * @param self - App object
- * @returns {Promise<any>}
+ * @param child
+ * @param self
+ * @returns {Promise<boolean>}
  */
 export async function onClose(child: any, self: any) : Promise<boolean> {
   const obj = new Promise<boolean>((resolve, reject) => {
@@ -60,9 +60,9 @@ export async function onClose(child: any, self: any) : Promise<boolean> {
 
 /**
  * Creates the "Dockerfile" and ".dockerignore"
- * @param self - App object
- * @param config - config object
- * @returns {Promise<any>}
+ * @param self
+ * @param config
+ * @returns {Promise<{}>}
  */
 export async function createDockerfile(self: any, config: any) : Promise<{}> {
   return new Promise(async (resolve, reject) => {
@@ -77,7 +77,7 @@ export async function createDockerfile(self: any, config: any) : Promise<{}> {
 
 /**
  * Finds a currently free port
- * @returns {Promise<PromiseLike<any> | Promise<any> | PromiseLike<never | T> | Promise<never | T>>}
+ * @returns {Promise<number>}
  */
 export async function getPort() : Promise<number> {
   return portastic.find({ min: 10000, max: 50000, retrieve: 1 })
@@ -88,9 +88,9 @@ export async function getPort() : Promise<number> {
 
 /**
  * Creates the Docker build configuration
- * @param self - App object
- * @param config - config object
- * @returns {Promise<any>}
+ * @param self
+ * @param config
+ * @returns {Promise<{}>}
  */
 export async function getCreateOptions(self: any, config: any) : Promise<{}> {
   return new Promise(async (resolve, reject) => {
