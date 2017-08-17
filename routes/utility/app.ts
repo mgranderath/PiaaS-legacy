@@ -15,6 +15,25 @@ if (isWin) {
   docker = new Docker({ socketPath: '/var/run/docker.sock' });
 }
 
+interface response {
+  status: boolean;
+  message?: string;
+  repo?: string;
+  port?: number;
+}
+
+interface appinfo {
+  name: string;
+  root: string;
+  running: boolean;
+  type: {};
+}
+
+interface deployresult {
+  status: boolean;
+  port?: number;
+}
+
 export class App {
   name: string;
   root: string;
@@ -32,9 +51,9 @@ export class App {
 
   /**
    * Gets the info of this application
-   * @returns {Promise<{name: string; root: string; running: (any | boolean); type: {type: string}}>}
+   * @returns {Promise<appinfo>}
    */
-  getInfo = async () => {
+  getInfo = async () : Promise<appinfo> => {
     return {
       name: this.name,
       root: this.root,
@@ -47,7 +66,7 @@ export class App {
    * initializes the directories for this application
    * @returns {Promise<string>}
    */
-  initDir = async () : Promise<string> => {
+  initDir = async () : Promise<response> => {
     const exists = await fs.exists(this.root);
     try {
       if (!exists) {
@@ -55,12 +74,12 @@ export class App {
         for (const key in this.dirs) {
           await fs.mkdir(this.dirs[key]);
         }
-        return 'success';
+        return { status: true };
       } else {
-        return 'exists';
+        return { status: false, message: 'exists' };
       }
     } catch (err) {
-      return 'err';
+      return { status: false };
     }
   }
 
@@ -68,7 +87,7 @@ export class App {
    * initializes the git repository for this application
    * @returns {Promise<string>}
    */
-  initGit = async () : Promise<string> => {
+  initGit = async () : Promise<response> => {
     let hookpath: string = path.resolve(this.dirs['repo'] + '/hooks/');
     try {
       await fs.mkdir(hookpath);
@@ -78,9 +97,9 @@ export class App {
       await createFile(hookpath, hook);
       await fs.chmod(hookpath, '0700');
       exec('git init --quiet --bare', { cwd: this.dirs['repo'] }, log);
-      return 'success';
+      return { status: true };
     } catch (err) {
-      return 'err';
+      return { status: false };
     }
   }
 
@@ -88,10 +107,10 @@ export class App {
    * Container function that runs the initialization
    * @returns {Promise<any>}
    */
-  init = async () : Promise<any> => {
-    const dir : string = await this.initDir();
-    if (dir === 'success') {
-      if (await this.initGit() === 'success') {
+  init = async () : Promise<response> => {
+    const dir : response = await this.initDir();
+    if (dir.status === true) {
+      if ((await this.initGit()).status === true) {
         return {
           status: true,
           message: 'Successfully initialized',
@@ -100,19 +119,19 @@ export class App {
       }else {
         return {
           status: false,
-          err: 'Error while Initializing git',
+          message: 'Error while Initializing git',
         };
       }
     }else {
-      if (dir === 'exists') {
+      if (dir.message === 'exists') {
         return {
           status: false,
-          err: 'Error while Initializing Directories - Directories already exist',
+          message: 'Error while Initializing Directories - Directories already exist',
         };
       }else {
         return {
           status: false,
-          err: 'Error while Initializing Directories - Could not create',
+          message: 'Error while Initializing Directories - Could not create',
         };
       }
     }
@@ -122,15 +141,15 @@ export class App {
    * Removes the docker image and container
    * @returns {Promise<any>}
    */
-  removeDocker = async () => {
+  removeDocker = async () : Promise<response> => {
     try {
       const container = await docker.getContainer(this.name);
       await container.remove({ force: true });
       const image = await docker.getImage(this.name);
       await image.remove();
-      return 'success';
+      return { status: true };
     }catch (err) {
-      return 'err';
+      return { status: false };
     }
   }
 
@@ -138,13 +157,13 @@ export class App {
    * Removes the directories of this application
    * @returns {Promise<boolean>}
    */
-  removeDirs = async () => {
+  removeDirs = async () : Promise<response> => {
     try {
       await fs.remove(this.root);
-      return true;
+      return { status: true };
     }catch (err) {
       console.log('Error on Remove');
-      return false;
+      return { status: false };
     }
   }
 
@@ -152,10 +171,10 @@ export class App {
    * Container function to remove the application
    * @returns {Promise<boolean>}
    */
-  remove = async () => {
+  remove = async () : Promise<response> => {
     await this.removeDocker();
     await this.removeDirs();
-    return true;
+    return { status: true };
   }
 
   /**
@@ -173,8 +192,8 @@ export class App {
    * Creates the docker image and container
    * @returns {Promise<any>}
    */
-  deploy = async () : Promise<any> => {
-    return new Promise(async (resolve, reject) => {
+  deploy = async () : Promise<deployresult> => {
+    return new Promise<deployresult>(async (resolve, reject) => {
       const config : any = await getConfig(this.dirs['srv']);
       const stream = tar.pack(this.dirs['srv']);
       if (!fs.existsSync(this.dirs['srv'] + '/Dockerfile')) {
@@ -185,7 +204,7 @@ export class App {
       await this.removeDocker();
       docker.buildImage(stream, { t: this.name })
         .then(async (stream: any) => {
-          const options = await getCreateOptions(this, config);
+          const options: any = await getCreateOptions(this, config);
           const createOptions = options[0];
           const port = options[1];
           async function onFinished(err: string, output: string) {
@@ -212,23 +231,23 @@ export class App {
    * Starts the applications docker container
    * @returns {Promise<any>}
    */
-  start = async () => {
-    return new Promise(async (resolve, reject) => {
+  start = async () : Promise<response> => {
+    return new Promise<response>(async (resolve, reject) => {
       try {
         const container = await docker.getContainer(this.name);
         container.start()
           .then((err: string, data: any) => {
             if (err) {
-              resolve(false);
+              resolve({ status: false });
             }
-            resolve(true);
+            resolve({ status: true });
           })
           .catch((err: string) => {
-            resolve(false);
+            resolve({ status: false });
           });
       } catch (err) {
         console.log(err);
-        resolve(false);
+        resolve({ status: false });
       }
     });
   }
@@ -237,23 +256,23 @@ export class App {
    * Stops the applications docker container
    * @returns {Promise<any>}
    */
-  stop = async () => {
-    return new Promise(async (resolve, reject) => {
+  stop = async () : Promise<response> => {
+    return new Promise<response>(async (resolve, reject) => {
       try {
         const container = await docker.getContainer(this.name);
         container.stop()
           .then((err: string, data: any) => {
             if (err) {
-              resolve(false);
+              resolve({ status: false });
             }
-            resolve(true);
+            resolve({ status: true });
           })
           .catch((err: string) => {
-            resolve(false);
+            resolve({ status: false });
           });
       } catch (err) {
         console.log(err);
-        resolve(false);
+        resolve({ status: false });
       }
     });
   }
@@ -262,17 +281,17 @@ export class App {
    * Container function for deployment
    * @returns {Promise<any>}
    */
-  pipeline = async () => {
+  pipeline = async () : Promise<response> => {
     await this.push();
     const deploy = (await this.deploy());
     if (!deploy.status) {
-      return { status: false, error: 'Error while deploying' };
+      return { status: false, message: 'Error while deploying' };
     }
     const start = await this.start();
     if (start) {
       return { status: true, message: 'Successfully deployed', port: deploy.port };
     }else {
-      return { status: false, error: 'Error while starting' };
+      return { status: false, message: 'Error while starting' };
     }
   }
 
@@ -280,7 +299,7 @@ export class App {
    * Gets whether the applications container is runnning
    * @returns {Promise<any>}
    */
-  isRunning = async () => {
+  isRunning = async () : Promise<boolean> => {
     try {
       const container = await docker.getContainer(this.name);
       const data = await container.inspect();
@@ -294,7 +313,7 @@ export class App {
    * Returns the application type
    * @returns {Promise<any>}
    */
-  type = async () => {
+  type = async () : Promise<{ type: string }> => {
     if (fs.existsSync(this.dirs['srv'] + '/package.json')) {
       return { type: 'node' };
     }else if (fs.existsSync(this.dirs['srv'] + '/requirements.txt')) {
