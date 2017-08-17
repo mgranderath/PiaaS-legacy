@@ -30,6 +30,10 @@ export class App {
     };
   }
 
+  /**
+   * Gets the info of this application
+   * @returns {Promise<{name: string; root: string; running: (any | boolean); type: {type: string}}>}
+   */
   getInfo = async () => {
     return {
       name: this.name,
@@ -39,6 +43,10 @@ export class App {
     };
   }
 
+  /**
+   * initializes the directories for this application
+   * @returns {Promise<string>}
+   */
   initDir = async () : Promise<string> => {
     const exists = await fs.exists(this.root);
     try {
@@ -56,6 +64,10 @@ export class App {
     }
   }
 
+  /**
+   * initializes the git repository for this application
+   * @returns {Promise<string>}
+   */
   initGit = async () : Promise<string> => {
     let hookpath: string = path.resolve(this.dirs['repo'] + '/hooks/');
     try {
@@ -72,6 +84,10 @@ export class App {
     }
   }
 
+  /**
+   * Container function that runs the initialization
+   * @returns {Promise<any>}
+   */
   init = async () : Promise<any> => {
     const dir : string = await this.initDir();
     if (dir === 'success') {
@@ -102,6 +118,10 @@ export class App {
     }
   }
 
+  /**
+   * Removes the docker image and container
+   * @returns {Promise<any>}
+   */
   removeDocker = async () => {
     try {
       const container = await docker.getContainer(this.name);
@@ -114,6 +134,10 @@ export class App {
     }
   }
 
+  /**
+   * Removes the directories of this application
+   * @returns {Promise<boolean>}
+   */
   removeDirs = async () => {
     try {
       await fs.remove(this.root);
@@ -124,12 +148,20 @@ export class App {
     }
   }
 
+  /**
+   * Container function to remove the application
+   * @returns {Promise<boolean>}
+   */
   remove = async () => {
     await this.removeDocker();
     await this.removeDirs();
     return true;
   }
 
+  /**
+   * Clones the application from the repository into the server directory
+   * @returns {Promise<boolean>}
+   */
   push = async () : Promise<boolean> => {
     const result = await fs.emptyDir(this.dirs['srv']);
     const child = exec('git clone --quiet ' + path.resolve(this.dirs['repo']) + ' '
@@ -137,6 +169,10 @@ export class App {
     return await onClose(child, this);
   }
 
+  /**
+   * Creates the docker image and container
+   * @returns {Promise<any>}
+   */
   deploy = async () : Promise<any> => {
     return new Promise(async (resolve, reject) => {
       const config : any = await getConfig(this.dirs['srv']);
@@ -172,6 +208,10 @@ export class App {
     });
   }
 
+  /**
+   * Starts the applications docker container
+   * @returns {Promise<any>}
+   */
   start = async () => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -193,6 +233,10 @@ export class App {
     });
   }
 
+  /**
+   * Stops the applications docker container
+   * @returns {Promise<any>}
+   */
   stop = async () => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -214,6 +258,10 @@ export class App {
     });
   }
 
+  /**
+   * Container function for deployment
+   * @returns {Promise<any>}
+   */
   pipeline = async () => {
     await this.push();
     const deploy = (await this.deploy());
@@ -228,6 +276,10 @@ export class App {
     }
   }
 
+  /**
+   * Gets whether the applications container is runnning
+   * @returns {Promise<any>}
+   */
   isRunning = async () => {
     try {
       const container = await docker.getContainer(this.name);
@@ -238,6 +290,10 @@ export class App {
     }
   }
 
+  /**
+   * Returns the application type
+   * @returns {Promise<any>}
+   */
   type = async () => {
     if (fs.existsSync(this.dirs['srv'] + '/package.json')) {
       return { type: 'node' };
@@ -248,6 +304,10 @@ export class App {
     }
   }
 
+  /**
+   * Returns a log stream of the container
+   * @returns {Promise<any>}
+   */
   logs = () : Promise<any> => {
     return new Promise(async (resolve, reject) => {
       const container = await docker.getContainer(this.name);
