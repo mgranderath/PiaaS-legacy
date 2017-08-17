@@ -1,11 +1,9 @@
-import {resolvePtr} from "dns";
-
 const exec = require('child_process').exec;
 const path = require('path');
 const fs = require('fs-extra');
 const tar = require('tar-fs');
 const stream = require('stream');
-import { log, createFile, onClose, createDockerfile, getConfig, getPort } from './helper';
+import { log, createFile, onClose, createDockerfile, getConfig, getCreateOptions } from './helper';
 const Docker = require('dockerode-promise-wrapper');
 
 const isWin = /^win/.test(process.platform);
@@ -151,26 +149,9 @@ export class App {
       await this.removeDocker();
       docker.buildImage(stream, { t: this.name })
         .then(async (stream: any) => {
-          const port = await getPort().then((data) => { return data.toString(); });
-          const createOptions = {
-            Image: this.name,
-            name: this.name,
-            Tty: true,
-            OpenStdin: false,
-            StdinOnce: false,
-            RestartPolicy: {
-              MaximumRetryCount: 2,
-              Name: 'on-failure',
-            },
-            ExposedPorts: { '3000/tcp': {} },
-            PortBindings: { '3000/tcp': [{ HostPort: port }] },
-            Env: [
-              'PORT=3000',
-            ],
-          };
-          Object.assign(
-            createOptions,
-            config.memory ? { Memory: config.memory * 1024 * 1024 } : null);
+          const options = await getCreateOptions(this, config);
+          const createOptions = options[0];
+          const port = options[1];
           async function onFinished(err: string, output: string) {
             docker.createContainer(createOptions)
               .then(() => {
