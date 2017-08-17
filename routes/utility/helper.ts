@@ -37,7 +37,7 @@ export async function onClose(child: any, self: any) : Promise<any> {
 
 export async function createDockerfile(self: any, config: any) {
   return new Promise(async (resolve, reject) => {
-    const command = config.web || 'npm start';
+    const command = config.web;
     let type = await self.type();
     type = type.type;
     const created = await createFile(self.dirs['srv'] + '/Dockerfile', dockerfiles(type, command)) &&
@@ -51,6 +51,44 @@ export async function getPort() {
         .then((port: any) => {
           return port;
         });
+}
+
+export async function getCreateOptions(self: any, config: any) : Promise<any> {
+  return new Promise(async (resolve, reject) => {
+    const port = await getPort().then((data) => { return data.toString(); });
+    const createOptions = {
+      Image: self.name,
+      name: self.name,
+      Tty: true,
+      OpenStdin: false,
+      StdinOnce: false,
+      ExposedPorts: { '3000/tcp': {} },
+      PortBindings: { '3000/tcp': [{ HostPort: port }] },
+      Env: [
+        'PORT=3000',
+      ],
+    };
+    if (config.memory) {
+      Object.assign(
+        createOptions,{ Memory: config.memory * 1024 * 1024 },
+      );
+    }
+    if (config.restart.on) {
+      if (config.restart.retries) {
+        Object.assign(
+          createOptions,{ RestartPolicy:
+            { MaximumRetryCount: config.restart.retries, Name: 'on-failure' } },
+        );
+      } else {
+        Object.assign(
+          createOptions,{ RestartPolicy:
+            { MaximumRetryCount: 1, Name: 'on-failure' } },
+        );
+      }
+    }
+    const result = [createOptions, port];
+    resolve(result);
+  });
 }
 
 
