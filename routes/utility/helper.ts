@@ -9,7 +9,7 @@ const YAML = require('yamljs');
  * @param {string} stdout
  * @param {string} stderr
  */
-export function log(error: string, stdout: string, stderr: string) {
+export function log(error: string, stdout: string, stderr: string) : void {
   if (error) {
     console.log(error);
   }
@@ -36,10 +36,10 @@ export async function createFile(path: string, content: string) : Promise<boolea
 
 /**
  * Returns the config of path
- * @param {string} path - path to directory
- * @returns {Promise<void>}
+ * @param {string} path
+ * @returns {Promise<{}>}
  */
-export async function getConfig(path: string) {
+export async function getConfig(path: string) : Promise<{}> {
   return YAML.load(path + '/Procfile');
 }
 
@@ -49,8 +49,8 @@ export async function getConfig(path: string) {
  * @param self - App object
  * @returns {Promise<any>}
  */
-export async function onClose(child: any, self: any) : Promise<any> {
-  const obj = new Promise((resolve, reject) => {
+export async function onClose(child: any, self: any) : Promise<boolean> {
+  const obj = new Promise<boolean>((resolve, reject) => {
     child.on('close', async () => {
       resolve(true);
     });
@@ -64,7 +64,7 @@ export async function onClose(child: any, self: any) : Promise<any> {
  * @param config - config object
  * @returns {Promise<any>}
  */
-export async function createDockerfile(self: any, config: any) {
+export async function createDockerfile(self: any, config: any) : Promise<{}> {
   return new Promise(async (resolve, reject) => {
     const command = config.web;
     let type = await self.type();
@@ -79,7 +79,7 @@ export async function createDockerfile(self: any, config: any) {
  * Finds a currently free port
  * @returns {Promise<PromiseLike<any> | Promise<any> | PromiseLike<never | T> | Promise<never | T>>}
  */
-export async function getPort() {
+export async function getPort() : Promise<number> {
   return portastic.find({ min: 10000, max: 50000, retrieve: 1 })
         .then((port: any) => {
           return port;
@@ -92,7 +92,7 @@ export async function getPort() {
  * @param config - config object
  * @returns {Promise<any>}
  */
-export async function getCreateOptions(self: any, config: any) : Promise<any> {
+export async function getCreateOptions(self: any, config: any) : Promise<{}> {
   return new Promise(async (resolve, reject) => {
     const port = await getPort().then((data) => { return data.toString(); });
     const createOptions = {

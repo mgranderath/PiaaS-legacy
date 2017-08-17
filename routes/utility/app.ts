@@ -15,6 +15,18 @@ if (isWin) {
   docker = new Docker({ socketPath: '/var/run/docker.sock' });
 }
 
+interface appinfo {
+  name: string;
+  root: string;
+  running: boolean;
+  type: {};
+}
+
+interface deployresult {
+  status: boolean;
+  port?: number;
+}
+
 export class App {
   name: string;
   root: string;
@@ -32,9 +44,9 @@ export class App {
 
   /**
    * Gets the info of this application
-   * @returns {Promise<{name: string; root: string; running: (any | boolean); type: {type: string}}>}
+   * @returns {Promise<appinfo>}
    */
-  getInfo = async () => {
+  getInfo = async () : Promise<appinfo> => {
     return {
       name: this.name,
       root: this.root,
@@ -88,7 +100,7 @@ export class App {
    * Container function that runs the initialization
    * @returns {Promise<any>}
    */
-  init = async () : Promise<any> => {
+  init = async () : Promise<{}> => {
     const dir : string = await this.initDir();
     if (dir === 'success') {
       if (await this.initGit() === 'success') {
@@ -122,7 +134,7 @@ export class App {
    * Removes the docker image and container
    * @returns {Promise<any>}
    */
-  removeDocker = async () => {
+  removeDocker = async () : Promise<string> => {
     try {
       const container = await docker.getContainer(this.name);
       await container.remove({ force: true });
@@ -138,7 +150,7 @@ export class App {
    * Removes the directories of this application
    * @returns {Promise<boolean>}
    */
-  removeDirs = async () => {
+  removeDirs = async () : Promise<boolean> => {
     try {
       await fs.remove(this.root);
       return true;
@@ -152,7 +164,7 @@ export class App {
    * Container function to remove the application
    * @returns {Promise<boolean>}
    */
-  remove = async () => {
+  remove = async () : Promise<boolean> => {
     await this.removeDocker();
     await this.removeDirs();
     return true;
@@ -173,8 +185,8 @@ export class App {
    * Creates the docker image and container
    * @returns {Promise<any>}
    */
-  deploy = async () : Promise<any> => {
-    return new Promise(async (resolve, reject) => {
+  deploy = async () : Promise<deployresult> => {
+    return new Promise<deployresult>(async (resolve, reject) => {
       const config : any = await getConfig(this.dirs['srv']);
       const stream = tar.pack(this.dirs['srv']);
       if (!fs.existsSync(this.dirs['srv'] + '/Dockerfile')) {
@@ -185,7 +197,7 @@ export class App {
       await this.removeDocker();
       docker.buildImage(stream, { t: this.name })
         .then(async (stream: any) => {
-          const options = await getCreateOptions(this, config);
+          const options: any = await getCreateOptions(this, config);
           const createOptions = options[0];
           const port = options[1];
           async function onFinished(err: string, output: string) {
@@ -212,8 +224,8 @@ export class App {
    * Starts the applications docker container
    * @returns {Promise<any>}
    */
-  start = async () => {
-    return new Promise(async (resolve, reject) => {
+  start = async () : Promise<boolean> => {
+    return new Promise<boolean>(async (resolve, reject) => {
       try {
         const container = await docker.getContainer(this.name);
         container.start()
@@ -237,8 +249,8 @@ export class App {
    * Stops the applications docker container
    * @returns {Promise<any>}
    */
-  stop = async () => {
-    return new Promise(async (resolve, reject) => {
+  stop = async () : Promise<boolean> => {
+    return new Promise<boolean>(async (resolve, reject) => {
       try {
         const container = await docker.getContainer(this.name);
         container.stop()
@@ -280,7 +292,7 @@ export class App {
    * Gets whether the applications container is runnning
    * @returns {Promise<any>}
    */
-  isRunning = async () => {
+  isRunning = async () : Promise<boolean> => {
     try {
       const container = await docker.getContainer(this.name);
       const data = await container.inspect();
@@ -294,7 +306,7 @@ export class App {
    * Returns the application type
    * @returns {Promise<any>}
    */
-  type = async () => {
+  type = async () : Promise<{ type: string }> => {
     if (fs.existsSync(this.dirs['srv'] + '/package.json')) {
       return { type: 'node' };
     }else if (fs.existsSync(this.dirs['srv'] + '/requirements.txt')) {

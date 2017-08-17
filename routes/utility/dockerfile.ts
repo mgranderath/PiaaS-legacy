@@ -1,6 +1,6 @@
 const dedent = require('dedent-js');
 
-export function dockerfiles(type: any, cmd: string) {
+export function dockerfiles(type: any, cmd: string) : string {
   const command: string = JSON.stringify(cmd.split(/[ ,]+/));
   if (type === 'node') {
     return dedent(
@@ -29,7 +29,7 @@ export function dockerfiles(type: any, cmd: string) {
       EXPOSE 8080
       CMD ${command}`);
   } else {
-    return null;
+    return '*.log';
   }
 }
 
