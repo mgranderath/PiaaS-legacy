@@ -1,6 +1,6 @@
 const dedent = require('dedent-js');
 
-export function dockerfiles(type: any, cmd: string){
+export function dockerfiles(type: any, cmd: string) {
   const command: string = JSON.stringify(cmd.split(/[ ,]+/));
   if (type === 'node') {
     return dedent(
